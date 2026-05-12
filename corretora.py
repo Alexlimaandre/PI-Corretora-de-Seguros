@@ -144,7 +144,6 @@ ctk.CTkButton(
     command=fechar_login,
 ).pack(pady=(16, 0))
 
-
 # ============= LOOP PRINCIPAL =============
 
 janela.mainloop()   # Mantém a janela aberta e respondendo a eventos
