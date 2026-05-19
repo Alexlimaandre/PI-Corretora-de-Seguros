@@ -1,3 +1,5 @@
+CREATE DATABASE Frank_Costa;
+
 CREATE TABLE Pessoa (
                         id_pessoa SERIAL PRIMARY KEY,
                         cpf_cnpj VARCHAR(14) NOT NULL,
