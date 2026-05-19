@@ -1,34 +1,33 @@
-# =============== CORRETORA.PY ================
-
-import customtkinter as ctk               # Importa a biblioteca customtkinter para criar a interface gráfica
-from config import USUARIO, SENHA         # Importa as credenciais de login do arquivo config.py
-
+import customtkinter as ctk                 # Importa a biblioteca customtkinter para criar a interface gráfica
+from config import USUARIO, SENHA          # Importa as credenciais de login do arquivo config.py
+from functools import partial              # Importa partial para evitar o uso de lambda nos botões
 
 ctk.set_appearance_mode("dark")           # Tema escuro
 ctk.set_default_color_theme("blue")       # Cor das janelas
 
 janela = ctk.CTk()                        # Cria a janela principal
 janela.title("Corretora de Seguros")      # Título da janela
-janela.geometry("700x450")                # Tamanho da janela
+janela.geometry("800x550")                # Tamanho da janela ajustado para melhor visualização do menu fixo
 # janela.resizable(False, False)          # Impede redimensionamento
 
 
 # ============= FUNÇÃO DE LOGIN =============
 
-def login():                                                                         # define a função de login
-    usuario = entry_user.get()                                                       # faz a janela ou painel do usuario
-    senha = entry_pass.get()                                                         # faz a janela ou painel da senha
+def login():                                                                 # define a função de login
+    usuario = entry_user.get()                                               # faz a janela ou painel do usuario
+    senha = entry_pass.get()                                                 # faz a janela ou painel da senha
 
-    if usuario == USUARIO and senha == SENHA:                                        # condição que verifica se o usuario e senha estão corretos
-        label_erro.configure(text="")                                                # Limpa mensagem de erro
-        frame_login.pack_forget()                                                    # Esconde o painel de login
-        frame_menu.pack(fill="both", expand=True)                                    # mostra o painel do menu principal
+    if usuario == USUARIO and senha == SENHA:                                # condição que verifica se o usuario e senha estão corretos
+        label_erro.configure(text="")                                        # Limpa mensagem de erro
+        frame_login.pack_forget()                                            # Esconde o painel de login
+        frame_menu.pack(fill="both", expand=True)                            # mostra o painel do menu principal
+        frame_lateral.pack(side="left", fill="y")                            # Ao logar, o menu lateral já deve aparecer fixo
 
     else:
         label_erro.configure(
             text="Usuário ou senha incorretos!",
             text_color="red"
-        )                                                                            # se falso mostra a mensagem de erro
+        )                                                                    # se falso mostra a mensagem de erro
 
 
 # ============= FRAME DE LOGIN =============
@@ -95,23 +94,6 @@ janela.bind("<Return>", lambda event: login())                   # Tecla Enter t
 
 frame_menu = ctk.CTkFrame(master=janela)                         # Cria o painel do menu principal inicialmente oculto
 
-menu_aberto = False                                              # controla se o menu lateral está visível
-
-
-def acessa_menu():                                               # função para mostrar ou esconder o menu lateral
-
-    global menu_aberto
-
-    if menu_aberto:
-
-        frame_lateral.pack_forget()                              # fecha o menu lateral
-        menu_aberto = False
-
-    else:
-
-        frame_lateral.pack(side="left", fill="y")                # abre o menu lateral à esquerda
-        menu_aberto = True
-
 
 # ============= BARRA SUPERIOR =============
 
@@ -126,33 +108,20 @@ frame_topbar.pack(side="top", fill="x")
 frame_topbar.pack_propagate(False)                               # Impede que o frame redimensione
 
 
-ctk.CTkButton(                                                   # Botão para abrir/fechar o menu lateral
-    frame_topbar,
-    text="☰",
-    width=45,
-    height=35,
-    font=ctk.CTkFont(size=20),
-    fg_color="transparent",
-    hover_color="#2a2a4e",
-    command=acessa_menu                                          # Chama a função para mostrar o menu
-).pack(side="left", padx=8, pady=5)
-
-
 ctk.CTkLabel(                                                    # Label do título na barra superior
     frame_topbar,
-    text=" Corretora de Seguros",
+    text=" Corretora de Seguros - Sistema Interno",
     font=ctk.CTkFont(size=15, weight="bold"),
     text_color="white"
-).pack(side="left", padx=4)
+).pack(side="left", padx=20)
 
 
 # ============= FUNÇÃO SAIR =============
 
 def fechar_login():                                              # função para fechar o menu e voltar para a tela de login
 
-    global menu_aberto                                           # controla se o menu lateral está visível
-
     frame_menu.pack_forget()                                     # Esconde o painel do menu principal
+    frame_lateral.pack_forget()                                  # Garante que o menu lateral também suma
 
     frame_login.pack(                                            # Mostra o painel de login novamente
         pady=20,
@@ -164,24 +133,8 @@ def fechar_login():                                              # função para
     entry_user.delete(0, "end")                                  # Limpa o campo de usuário
     entry_pass.delete(0, "end")                                  # Limpa o campo de senha
 
-    if menu_aberto:                                              # Se o menu lateral estiver aberto fecha ele
 
-        frame_lateral.pack_forget()                              # Esconde o menu lateral
-        menu_aberto = False                                      # Atualiza o estado do menu para fechado
-
-
-ctk.CTkButton(                                                   # Botão para sair do menu e voltar para a tela de login
-    frame_topbar,
-    text="Sair",
-    width=80,
-    height=30,
-    fg_color="#c0392b",
-    hover_color="#e74c3c",
-    command=fechar_login                                         # Chama a função para fechar o menu e voltar para o login
-).pack(side="right", padx=12, pady=7)
-
-
-# ============= FRAME ENTRAL =============
+# ============= FRAME CENTRAL =============
 
 frame_centro = ctk.CTkFrame(                                     # Cria o frame central do menu principal
     frame_menu,
@@ -191,29 +144,26 @@ frame_centro = ctk.CTkFrame(                                     # Cria o frame 
 frame_centro.pack(fill="both", expand=True)                      # Preenche todo o espaço disponível
 
 
-# ============= MENU0LATERAL =============
+# ============= MENU LATERAL (FIXO) =============
 
-frame_lateral = ctk.CTkFrame(                                    # Cria o menu lateral dentro do frame central
+frame_lateral = ctk.CTkFrame(                                    # Cria o menu lateral fixo
     frame_centro,
     width=180,
     corner_radius=0,
     fg_color="#16213e"
 )
+frame_lateral.pack_propagate(False)                              # Mantém a largura fixa
 
 
 ctk.CTkLabel(
     frame_lateral,
-    text="MENU",
+    text="NAVEGAÇÃO",
     font=ctk.CTkFont(size=12, weight="bold"),                    # Label do título do menu lateral
     text_color="gray"
-).pack(
-    pady=(16, 6),
-    padx=12,
-    anchor="w"
-)                                                                 # alinhado à esquerda
+).pack(pady=(20, 10), padx=12, anchor="w")
 
 
-# =============FRAME DI CONTEÚDO =============
+# ============= FRAME DE CONTEÚDO =============
 
 frame_conteudo = ctk.CTkFrame(                                   # Cria o frame para exibir o conteúdo das seções
     frame_centro,
@@ -227,7 +177,7 @@ frame_conteudo.pack(
 )
 
 
-# ============= FUNÇÃO MOSTRAR SEÇÃO=============
+# ============= FUNÇÃO MOSTRAR SEÇÃO =============
 
 def mostrar_secao(nome):                                         # Função para mostrar o conteúdo de cada seção
 
@@ -242,26 +192,23 @@ def mostrar_secao(nome):                                         # Função para
 
     ctk.CTkLabel(                                                # cria mensagem abaixo do título
         frame_conteudo,
-        text="Em construção...",
+        text=f"Gerenciamento de {nome}",
         text_color="gray"
     ).pack()
 
-    if menu_aberto:                                              # Se o menu lateral estiver aberto fecha ele
-        acessa_menu()
 
+# ============= BOTÕES DO MENU LATERAL =============
 
-# =============BOTÕES DO MENU LATERAL =============
-
-for texto, secao in [                      # Lista de seções do menu lateral com texto do botão
-
+# Botões de Navegação (Fixos no topo)
+# Conferida a estrutura da lista e vírgulas internas
+secoes = [
     (" CLIENTES", "Clientes"),
     (" APÓLICES", "Apólices"),
     (" VENDAS", "Vendas")
+]
 
-]:
-
-    ctk.CTkButton(                                       # Cria os botões do menu lateral para cada seção
-
+for texto, secao in secoes:
+    ctk.CTkButton(
         frame_lateral,
         text=texto,
         anchor="w",
@@ -270,11 +217,24 @@ for texto, secao in [                      # Lista de seções do menu lateral c
         fg_color="transparent",
         hover_color="#0f3460",
         font=ctk.CTkFont(size=13),
-        command=lambda s=secao: mostrar_secao(s)
+        command=partial(mostrar_secao, secao)                    # Usando partial em vez de lambda para maior segurança
+    ).pack(pady=3, padx=10)
 
-    ).pack(pady=3, padx=8)
+# Botão SAIR (Fixo embaixo)
+btn_sair_lateral = ctk.CTkButton(
+    frame_lateral,
+    text="SAIR",
+    anchor="center",
+    width=160,
+    height=40,
+    fg_color="#c0392b",
+    hover_color="#e74c3c",
+    font=ctk.CTkFont(size=13, weight="bold"),
+    command=fechar_login                                         # Função fechar_login chamada corretamente
+)
+btn_sair_lateral.pack(side="bottom", pady=20, padx=10)           # Posiciona o botão sair na parte de baixo do menu
 
 
 # ============= LOOP PRINCIPAL =============
 
-janela.mainloop()                                                # Mantém a janela aberta
+janela.mainloop()                                                # Inicia o loop da aplicação
