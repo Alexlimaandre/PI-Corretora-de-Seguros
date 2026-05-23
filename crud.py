@@ -4,13 +4,15 @@ conn = conexao()
 cursor = conn.cursor()
 
 
-# CREATE - Pessoa
+# ========================================= #
+#                  CREATE                   #
+# ========================================= #
 def create_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
     global conn, cursor
     try:
         conn
         cursor.execute(
-            "INSERT INTO pessoa (cpf, nome, email, sexo, telefone, data_nasc, status) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            "INSERT INTO pessoa (cpf_cnpj, nome_completo, email, sexo, telefone, data_nascimento, status) VALUES (%s, %s, %s, %s, %s, %s, %s)",
             (cpf, nome, email, sexo, telefone, data_nasc, status)
         )
         conn.commit()
@@ -25,13 +27,13 @@ def create_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
 
 
 # CREATE - Apólice
-def create_apolice(cotacao, inicio, fim):
+def create_apolice(id_cotacao, inicio, fim):
     global conn, cursor
     try:
         conexao()
         cursor.execute(
-            "INSERT INTO apolice (cotacao, inicio, fim) VALUES (%s, %s, %s)",
-            (cotacao, inicio, fim)
+            "INSERT INTO apolice (id_cotacao, inicio, fim) VALUES (%s, %s, %s)",
+            (id_cotacao, inicio, fim)
         )
         conn.commit()
         print("Apólice criada com sucesso!")
@@ -46,13 +48,13 @@ def create_apolice(cotacao, inicio, fim):
 
 
 # CREATE - Bens
-def create_bens(id_pessoa, bem, desc_bem, valor_estimado):
+def create_bens(id_pessoa, tipo_bem, desc_bem, valor_estimado):
     global conn, cursor
     try:
         conexao()
         cursor.execute(
-            "INSERT INTO bens (id_pessoa, bem, desc_bem, valor_estimado) VALUES (%s, %s, %s, %s)",
-            (id_pessoa, bem, desc_bem, valor_estimado)
+            "INSERT INTO bens (id_pessoa, tipo_bem, descricao_bem, valor_estimado) VALUES (%s, %s, %s, %s)",
+            (id_pessoa, tipo_bem, desc_bem, valor_estimado)
         )
         conn.commit()
         print("Bem criado com sucesso!")
@@ -110,7 +112,7 @@ def create_seguradora(nome_fant, cnpj, tel_suporte):
     try:
         conexao()
         cursor.execute(
-            "INSERT INTO seguradora (nome_fant, cnpj, tel_suporte) VALUES (%s, %s, %s)",
+            "INSERT INTO seguradora (nome_fantasia, cnpj, telefone_suporte) VALUES (%s, %s, %s)",
             (nome_fant, cnpj, tel_suporte)
         )
         conn.commit()
@@ -123,8 +125,9 @@ def create_seguradora(nome_fant, cnpj, tel_suporte):
         cursor.close()
         fechar_conexao(conn)
 
-# ============= // ============= #
-
+# ========================================= #
+#                   READ                    #
+# ========================================= #
 # READ - Pessoa
 def read_pessoa(cpf):
     global conn, cursor
@@ -395,8 +398,9 @@ def read_todas_seguradoras():
         cursor.close()
         fechar_conexao(conn)
 
-# ============= // ============= #
-
+# ========================================= #
+#                  UPDATE                   #
+# ========================================= #
 
 # UPDATE
 # def update_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
@@ -407,6 +411,9 @@ def read_todas_seguradoras():
 # def update_apolice(id_apolice, cotacao, inicio, fim):
 
 
+# ========================================= #
+#                  DELETE                   #
+# ========================================= #
 # DELETE - Pessoa
 def delete_pessoa(cpf):
     global conn, cursor
@@ -524,6 +531,8 @@ def delete_apolice(id_apolice):
 
     
     
-# read_pessoa(str(20391876503))
-read_todas_pessoas()
+read_pessoa(str(58393923913))
+# read_todas_pessoas()
+
+# create_pessoa("58393923913", "Alexandre", "alexandre@email.com", "M", "123456789", "03-05-2006", "Ativo")
 
