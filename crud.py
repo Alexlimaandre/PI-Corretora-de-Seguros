@@ -1,18 +1,12 @@
 from conn import conexao, fim_conexao
 
-conn = None
-cursor = None
-
-
-def iniciar_conexao():
-    global conn, cursor
-    conn = conexao()
-    cursor = conn.cursor()
-    print("Conexão iniciada.")
+conn = conexao()
+cursor = conn.cursor()
 
 
 # CREATE - Pessoa
 def create_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
+    
     try:
         cursor.execute(
             "INSERT INTO pessoa (cpf, nome, email, sexo, telefone, data_nasc, status) VALUES (%s, %s, %s, %s, %s, %s, %s)",
@@ -88,20 +82,20 @@ def create_seguradora(nome_fant, cnpj, tel_suporte):
     except Exception as e:
         print("Erro ao criar seguradora:", e)
 
+# ============= // ============= #
 
 # READ - Pessoa
 def read_pessoa(cpf):
-    if len(cpf) == 11 and cpf.isdigit():
-        print("CPF válido.")
-
     try:
-        cursor.execute("SELECT * FROM pessoa WHERE cpf = %s", (cpf,))
+        conexao()
+        cursor.execute("SELECT * FROM pessoa WHERE cpf_cnpj = %s", (cpf,))
         pessoa = cursor.fetchone()
 
         if pessoa:
             print("Pessoa encontrada:", pessoa)
         else:
             print("Pessoa não encontrada.")
+        fechar_conexao(conexao())
 
     except Exception as e:
         print("Erro ao ler pessoa:", e)
@@ -109,11 +103,14 @@ def read_pessoa(cpf):
 
 def read_todas_pessoas():
     try:
+        conexao()
         cursor.execute("SELECT * FROM pessoa")
         pessoas = cursor.fetchall()
 
         for i in pessoas:
             print(i)
+            
+        fechar_conexao()
 
     except Exception as e:
         print("Erro ao ler todas as pessoas:", e)
@@ -286,6 +283,8 @@ def read_todas_seguradoras():
     except Exception as e:
         print("Erro ao ler todas as seguradoras:", e)
 
+# ============= // ============= #
+
 
 # UPDATE
 # def update_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
@@ -379,6 +378,8 @@ def delete_apolice(id_apolice):
     except Exception as e:
         print("Erro ao deletar apólice:", e)
 
+# ============= // ============= #
+
 
 def fechar_conexao():
     global conn, cursor
@@ -390,3 +391,6 @@ def fechar_conexao():
         fim_conexao(conn)
 
     print("Conexão finalizada.")
+    
+    
+read_pessoa(str(62034589106))

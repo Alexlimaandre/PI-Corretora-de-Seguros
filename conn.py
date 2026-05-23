@@ -11,15 +11,18 @@ def conexao():
         conn = psycopg2.connect(
             host="localhost",
             database="Frank_Costa",
-            user="root",
-            password="root",
+            user="postgres",
+            password='root',
             port="5432"
         )
-        print("Conexão feita")
+        print("Banco Conectado")
         return conn
     
     except Exception as e:
-       return "Erro ao conectar com o banco de dados:", e
+       print("Erro ao conectar com o banco de dados:", e)
+       return None
+  
+  
         
 def fim_conexao(conn):
     if conn:
