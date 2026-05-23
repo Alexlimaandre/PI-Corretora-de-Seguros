@@ -1,10 +1,8 @@
 import psycopg2 
 from psycopg2 import Error
-from dotenv import load_dotenv
-import os
+import config
 
-load_dotenv()
-password = os.getenv("password")
+password = config.password
 
 def conexao():
     try:
@@ -12,10 +10,9 @@ def conexao():
             host="localhost",
             database="Frank_Costa",
             user="postgres",
-            password='root',
+            password=password,
             port="5432"
         )
-        print("Banco Conectado")
         return conn
     
     except Exception as e:
@@ -24,7 +21,6 @@ def conexao():
   
   
         
-def fim_conexao(conn):
+def fechar_conexao(conn):
     if conn:
         conn.close()
-        print("Conexão encerrada")
