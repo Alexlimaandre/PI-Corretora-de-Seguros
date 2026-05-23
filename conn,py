@@ -1,0 +1,27 @@
+import psycopg2 
+from psycopg2 import Error
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+password = os.getenv("password")
+
+def conexao():
+    try:
+        conn = psycopg2.connect(
+            host="localhost",
+            database="Frank_Costa",
+            user="root",
+            password="root",
+            port="5432"
+        )
+        print("Conexão feita")
+        return conn
+    
+    except Exception as e:
+       return "Erro ao conectar com o banco de dados:", e
+        
+def fim_conexao(conn):
+    if conn:
+        conn.close()
+        print("Conexão encerrada")
