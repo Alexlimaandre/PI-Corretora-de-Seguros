@@ -72,7 +72,7 @@ def create_cotacao(id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotac
     try:
         conexao()
         cursor.execute(
-            "INSERT INTO cotacao (id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao) VALUES (%s, %s, %s, %s, %s)",
+            "INSERT INTO cotacoes (id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao) VALUES (%s, %s, %s, %s, %s)",
             (id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao)
         )
         conn.commit()
@@ -132,7 +132,7 @@ def create_seguradora(nome_fant, cnpj, tel_suporte):
 def read_pessoa(cpf):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute("SELECT * FROM pessoa WHERE cpf_cnpj = %s", (cpf,))
         pessoa = cursor.fetchone()
 
@@ -140,8 +140,6 @@ def read_pessoa(cpf):
             print("Pessoa encontrada:", pessoa)
         else:
             print("Pessoa não encontrada.")
-        fechar_conexao(conn)
-
     except Exception as e:
         print("Erro ao ler pessoa:", e)
     finally:
@@ -152,14 +150,22 @@ def read_pessoa(cpf):
 def read_todas_pessoas():
     global conn, cursor
     try:
-        conexao()
-        cursor.execute("SELECT * FROM pessoa")
+        conn
+        cursor.execute("""
+                       SELECT 
+                        id_pessoa,
+                        nome_completo,
+                        email,
+                        sexo,
+                        telefone,
+                        TO_CHAR(data_nascimento, 'DD/MM/YYYY'),
+                        status
+                       FROM Pessoa;
+                       """)
         pessoas = cursor.fetchall()
 
         for i in pessoas:
-            print(i)
-            
-        fechar_conexao(conn)
+            print(i, end="\n\n")
 
     except Exception as e:
         print("Erro ao ler todas as pessoas:", e)
@@ -172,7 +178,7 @@ def read_todas_pessoas():
 def read_apolice(id_apolice):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
             "SELECT * FROM apolice WHERE id_apolice = %s",
             (id_apolice,)
@@ -183,8 +189,6 @@ def read_apolice(id_apolice):
             print("Apólice encontrada:", apolice)
         else:
             print("Apólice não encontrada.")
-        fechar_conexao(conn)
-
     except Exception as e:
         print("Erro ao ler apólice:", e)
     finally:
@@ -195,16 +199,13 @@ def read_apolice(id_apolice):
 def read_todas_apolices():
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute("SELECT * FROM apolice")
         apolices = cursor.fetchall()
 
         for i in apolices:
-            print(i)
-        
-        fechar_conexao(conn)
-        
-
+            print(i, end="\n\n")
+            
     except Exception as e:
         print("Erro ao ler todas as apólices:", e)
     finally:
@@ -216,7 +217,7 @@ def read_todas_apolices():
 def read_bens(id_pessoa):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
             "SELECT * FROM bens WHERE id_pessoa = %s",
             (id_pessoa,)
@@ -226,9 +227,7 @@ def read_bens(id_pessoa):
         if bens:
             print("Bens encontrados:", bens)
         else:
-            print("Nenhum bem encontrado para essa pessoa.")
-        fechar_conexao(conn)
-        
+            print("Nenhum bem encontrado para essa pessoa.") 
 
     except Exception as e:
         print("Erro ao ler bens:", e)
@@ -240,14 +239,12 @@ def read_bens(id_pessoa):
 def read_todos_bens():
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute("SELECT * FROM bens")
         bens = cursor.fetchall()
 
         for i in bens:
-            print(i)
-        fechar_conexao(conn)
-        
+            print(i, end="\n\n")
 
     except Exception as e:
         print("Erro ao ler todos os bens:", e)
@@ -260,9 +257,9 @@ def read_todos_bens():
 def read_cotacao_por_pessoa(id_pessoa):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
-            "SELECT * FROM cotacao WHERE id_pessoa = %s",
+            "SELECT * FROM cotacoes WHERE id_pessoa = %s",
             (id_pessoa,)
         )
         cotacoes = cursor.fetchall()
@@ -283,9 +280,9 @@ def read_cotacao_por_pessoa(id_pessoa):
 def read_cotacao(id_cotacao):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
-            "SELECT * FROM cotacao WHERE id_cotacao = %s",
+            "SELECT * FROM cotacoes WHERE id_cotacao = %s",
             (id_cotacao,)
         )
         cotacao = cursor.fetchone()
@@ -302,18 +299,51 @@ def read_cotacao(id_cotacao):
         fechar_conexao(conn)
 
 
+# def read_todas_cotacoes():
+#     global conn, cursor
+#     try:
+#         conn
+#         cursor.execute("SELECT * FROM cotacoes")
+#         cotacoes = cursor.fetchall()
+
+#         for i in cotacoes:
+#             print(i)
+
+#     except Exception as e:
+#         print("Erro ao ler todas as cotações:", e)
+#     finally:
+#         cursor.close()
+#         fechar_conexao(conn)
+
+# Consulta com JOIN para melhor exibição dos dados
 def read_todas_cotacoes():
     global conn, cursor
+
     try:
-        conexao()
-        cursor.execute("SELECT * FROM cotacao")
+        conn
+        cursor.execute("""
+            SELECT
+                c.id_cotacao,
+                p.nome_completo AS cliente,
+                s.nome_fantasia AS seguradora,
+                pl.nome_plano AS plano,
+                pl.tipo_cobertura,
+                TO_CHAR(c.valor_cotacao, 'FM999G999G999D00'),
+                TO_CHAR(c.data_cotacao, 'DD/MM/YYYY')
+            FROM cotacoes c
+            JOIN pessoa p USING(id_pessoa)
+            JOIN seguradora s USING(id_seguradora)
+            JOIN plano pl USING(id_plano)
+            ORDER BY c.id_cotacao;
+        """)
+
         cotacoes = cursor.fetchall()
 
-        for i in cotacoes:
-            print(i)
+        for cotacao in cotacoes:
+            print(cotacao, end="\n\n")
 
     except Exception as e:
-        print("Erro ao ler todas as cotações:", e)
+        print("Erro ao ler cotações completas:", e)
     finally:
         cursor.close()
         fechar_conexao(conn)
@@ -323,7 +353,7 @@ def read_todas_cotacoes():
 def read_plano(id_plano):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
             "SELECT * FROM plano WHERE id_plano = %s",
             (id_plano,)
@@ -345,12 +375,19 @@ def read_plano(id_plano):
 def read_todos_planos():
     global conn, cursor
     try:
-        conexao()
-        cursor.execute("SELECT * FROM plano")
+        conn
+        cursor.execute("""
+                        SELECT b.id_bem,
+                            p.nome_completo,
+                            b.tipo_bem,
+                            b.descricao_bem,
+                            TO_CHAR(b.valor_estimado,'FM999G999G999D00')
+                       FROM Bens b 
+                       JOIN Pessoa p USING(id_pessoa);""")
         planos = cursor.fetchall()
 
         for i in planos:
-            print(i)
+            print(i, end="\n\n")
 
     except Exception as e:
         print("Erro ao ler todos os planos:", e)
@@ -360,13 +397,13 @@ def read_todos_planos():
 
 
 # READ - Seguradora
-def read_seguradora(id_seguradora):
+def read_seguradora(cnpj):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
-            "SELECT * FROM seguradora WHERE id_seguradora = %s",
-            (id_seguradora,)
+            "SELECT * FROM seguradora WHERE cnpj = %s",
+            (cnpj,)
         )
         seguradora = cursor.fetchone()
 
@@ -385,12 +422,12 @@ def read_seguradora(id_seguradora):
 def read_todas_seguradoras():
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute("SELECT * FROM seguradora")
         seguradoras = cursor.fetchall()
 
         for i in seguradoras:
-            print(i)
+            print(i, end="\n\n")
 
     except Exception as e:
         print("Erro ao ler todas as seguradoras:", e)
@@ -403,7 +440,7 @@ def read_todas_seguradoras():
 # ========================================= #
 
 # UPDATE
-# def update_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
+# def update_pessoa(cpf_cnpj, nome, email, sexo, telefone, data_nasc, status):
 # def update_seguradora(id_seguradora, nome_fant, cnpj, tel_suporte):
 # def update_cotacao(id_cotacao, id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao):
 # def update_bem(id_bem, id_pessoa, bem, desc_bem, valor_estimado):
@@ -418,9 +455,9 @@ def read_todas_seguradoras():
 def delete_pessoa(cpf):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
-            "DELETE FROM pessoa WHERE cpf = %s",
+            "DELETE FROM pessoa WHERE cpf_cnpj = %s",
             (cpf,)
         )
         conn.commit()
@@ -437,7 +474,7 @@ def delete_pessoa(cpf):
 def delete_seguradora(id_seguradora):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
             "DELETE FROM seguradora WHERE id_seguradora = %s",
             (id_seguradora,)
@@ -456,7 +493,7 @@ def delete_seguradora(id_seguradora):
 def delete_cotacao(id_cotacao):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
             "DELETE FROM cotacao WHERE id_cotacao = %s",
             (id_cotacao,)
@@ -475,7 +512,7 @@ def delete_cotacao(id_cotacao):
 def delete_bem(id_bem):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
             "DELETE FROM bens WHERE id_bem = %s",
             (id_bem,)
@@ -494,7 +531,7 @@ def delete_bem(id_bem):
 def delete_plano(id_plano):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
             "DELETE FROM plano WHERE id_plano = %s",
             (id_plano,)
@@ -513,7 +550,7 @@ def delete_plano(id_plano):
 def delete_apolice(id_apolice):
     global conn, cursor
     try:
-        conexao()
+        conn
         cursor.execute(
             "DELETE FROM apolice WHERE id_apolice = %s",
             (id_apolice,)
@@ -529,10 +566,18 @@ def delete_apolice(id_apolice):
 
 # ============= // ============= #
 
+# read_cotacao_por_pessoa(1)
     
-    
-read_pessoa(str(58393923913))
-# read_todas_pessoas()
+# read_todas_seguradoras()
+# read_seguradora('01938018000156')
+
+# read_todas_apolices()
+
+# read_todos_planos()
+
+# read_todas_cotacoes()
+read_todas_pessoas()
 
 # create_pessoa("58393923913", "Alexandre", "alexandre@email.com", "M", "123456789", "03-05-2006", "Ativo")
+# delete_pessoa(str(58393923913))
 

@@ -13,6 +13,7 @@ def conexao():
             password=password,
             port="5432"
         )
+        print('connextado com sucesso')
         return conn
     
     except Exception as e:
