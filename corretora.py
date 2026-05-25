@@ -6,7 +6,7 @@ ctk.set_default_color_theme("blue")       # Cor das janelas
 
 janela = ctk.CTk()                         # Criou a janela principal
 janela.title("Corretora de Seguros")       # titulo da janela
-janela.geometry("500x350")                 # tamanho da janela
+janela.geometry("850x650")                 # tamanho da janela
 
 
 # ============= BANCO DE DADOS TEMPORÁRIO =============
