@@ -74,6 +74,18 @@ def create_cotacao(id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotac
 #                   READ                    #
 # ========================================= #
 
+def read_todas_pessoas():
+    # Retorna uma lista de dicionários com todos os clientes do banco
+    try:
+        cursor.execute("SELECT * FROM pessoa")
+        resultados = cursor.fetchall()  # pega todas as linhas retornadas
+        for i in resultados:
+            print(i, end="\n\n")  # imprime cada cliente com uma linha em branco entre eles
+
+    except Exception as e:
+        print("Erro ao buscar todas as pessoas:", e)
+        return []  # retorna lista vazia se der erro
+
 def read_pessoa_por_cpf(cpf):
     # Busca cliente pelo CPF — retorna dicionário ou None se não encontrar
     try:
@@ -412,5 +424,4 @@ def delete_cotacao(id_cotacao):
 
 # ============= TESTE  =============
 
-resultado = read_pessoa_por_cpf('27777777777')  
-print(resultado)
+# read_todas_pessoas()  
