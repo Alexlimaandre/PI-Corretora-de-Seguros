@@ -1,20 +1,17 @@
-import customtkinter as ctk                 # Importei a biblioteca customtkinter para criar a interface gráfica
-from config import USUARIO, SENHA    
-import crud                            # Importa as funções de CRUD para manipular os dados
+# main.py
+# Interface gráfica do sistema de corretora de seguros
+# Conectado ao banco de dados PostgreSQL via módulo crud.py
 
-ctk.set_appearance_mode("dark")            # escolhi tema escuro
-ctk.set_default_color_theme("blue")       # Cor das janelas
+import customtkinter as ctk                # biblioteca para interface gráfica moderna
+from config import USUARIO, SENHA          # credenciais de login do arquivo config.py
+import crud                                # funções de acesso ao banco de dados
 
-janela = ctk.CTk()                         # Criou a janela principal
-janela.title("Corretora de Seguros")       # titulo da janela
+ctk.set_appearance_mode("dark")            # tema escuro
+ctk.set_default_color_theme("blue")       # cor padrão dos botões
+
+janela = ctk.CTk()                         # janela principal do sistema
+janela.title("Corretora de Seguros")       # título da janela
 janela.geometry("850x650")                 # tamanho da janela
-
-
-# ============= BANCO DE DADOS TEMPORÁRIO =============
-
-bd_clientes = []                           # banco temporário até integração
-bd_apolices = []
-bd_vendas = []
 
 
 # ============= FUNÇÕES DE LIMITE DE TAMANHO =============
@@ -32,7 +29,7 @@ def limita_telefone(texto_atual):          # telefone não ultrapassa 11 caracte
     return len(texto_atual) <= 11
 
 
-# Registra as funções para que possam ser usadas como validadores
+# Registra as funções para que possam ser usadas como validadores pelo Tkinter
 validador_cpf      = janela.register(limita_cpf)
 validador_apolice  = janela.register(limita_apolice)
 validador_venda    = janela.register(limita_venda)
@@ -44,7 +41,7 @@ validador_telefone = janela.register(limita_telefone)
 def mostrar_msg_sucesso(mensagem):         # exibe janela de aviso após operações do CRUD
     popup = ctk.CTkToplevel(janela)        # cria uma nova janela pop-up
     popup.title("Aviso do Sistema")        # nome da janela
-    popup.geometry("400x220")             # tamanho da janela
+    popup.geometry("400x220")              # tamanho da janela
     popup.grab_set()                       # impede interação com a janela principal enquanto o pop-up estiver aberto
 
     ctk.CTkLabel(
@@ -210,7 +207,7 @@ frame_conteudo.pack(side="right", fill="both", expand=True)
 
 # ============= VARIÁVEIS GLOBAIS DOS INPUTS =============
 
-campo1_ativo  = None   # armazena referência  do campo 1 ativo no formulário
+campo1_ativo  = None   # armazena referência do campo 1 ativo no formulário
 campo2_ativo  = None
 campo3_ativo  = None
 campo4_ativo  = None
@@ -228,7 +225,6 @@ def confirma_crud():
     global campo1_ativo, campo2_ativo, campo3_ativo, campo4_ativo
     global campo5_ativo, campo6_ativo, campo7_ativo
     global painel_usado, chamar_acao, label_erro_crud
-    global bd_clientes, bd_apolices, bd_vendas
 
     # Coleta os valores digitados em cada campo, removendo espaços extras
     v1 = campo1_ativo.get().strip() if campo1_ativo else ""
@@ -241,14 +237,14 @@ def confirma_crud():
 
     label_erro_crud.configure(text="")                          # limpa erro anterior antes de validar
 
-    # --- VALIDAÇÃO: campos obrigatórios ---
+    # --- VALIDAÇÃO DE CAMPOS ---
     if chamar_acao in ["Acrescentar", "Atualizar"]:             # todos os campos devem estar preenchidos
         if (campo1_ativo and not v1) or (campo2_ativo and not v2) or \
            (campo3_ativo and not v3) or (campo4_ativo and not v4) or \
            (campo5_ativo and not v5) or (campo6_ativo and not v6) or \
            (campo7_ativo and not v7):
             label_erro_crud.configure(
-                text="Erro: Preencha todos os campos do formulário!",
+                text="Preencha todos os campos do formulário!",
                 text_color="#e74c3c"
             )
             return
@@ -256,112 +252,98 @@ def confirma_crud():
     elif chamar_acao == "Pesquisar":                            # pelo menos um campo deve ser preenchido
         if not v1 and not v2 and not v5:
             label_erro_crud.configure(
-                text="Erro: Preencha pelo menos um campo para buscar!",
+                text="Preencha pelo menos um campo para buscar!",
                 text_color="#e74c3c"
             )
             return
 
-    elif chamar_acao == "Remover":                              # CPF obrigatório para remover
+    elif chamar_acao == "Remover":                              # CPF obrigatório para remover cliente
         if not v1:
             label_erro_crud.configure(
-                text="Erro: Informe o CPF/CNPJ para localizar o cliente.",
+                text="Informe o CPF/CNPJ para localizar o cliente.",
                 text_color="#e74c3c"
             )
             return
 
-    mensagem_alerta = "Operação realizada com sucesso!"
+    mensagem_alerta = ""
 
 
-    # ====== 1. CRUD DE CLIENTES ======
+    # ====== CRUD DE CLIENTES ======
 
     if painel_usado == "Clientes":
 
-        if chamar_acao == "Acrescentar":                        # cria dicionário com os dados e adiciona ao bd
-            novo_cliente = {
-                "cpf_cnpj":        v1,
-                "nome_completo":   v2,
-                "email":           v3,
-                "sexo":            v4,
-                "telefone":        v5,
-                "data_nascimento": v6,
-                "status":          v7
-            }
-            crud.create_pessoa(str(v1), str(v2), str(v3), str(v4), str(v5), str(v6), str(v7))
-            bd_clientes.append(novo_cliente)
-            mensagem_alerta = "Cliente adicionado com sucesso"
+        if chamar_acao == "Acrescentar":
+            # Chama a função do banco — retorna True se salvou, False se deu erro
+            sucesso = crud.create_pessoa(v1, v2, v3, v4, v5, v6, v7)
 
-        elif chamar_acao == "Pesquisar":                        # busca por CPF, nome ou telefone
-            cliente_encontrado = None
-            for cliente in bd_clientes:
-                if (v1 and cliente["cpf_cnpj"] == v1) or \
-                   (v2 and cliente["nome_completo"].lower() == v2.lower()) or \
-                   (v5 and cliente["telefone"] == v5):
-                    cliente_encontrado = cliente
-                    break
-
-            if cliente_encontrado:
-                mensagem_alerta = (
-                    f"Cliente encontrado!\n\n"
-                    f"CPF/CNPJ: {cliente_encontrado['cpf_cnpj']}\n"
-                    f"Nome: {cliente_encontrado['nome_completo']}\n"
-                    f"Email: {cliente_encontrado['email']}\n"
-                    f"Sexo: {cliente_encontrado['sexo']}\n"
-                    f"Telefone: {cliente_encontrado['telefone']}\n"
-                    f"Nascimento: {cliente_encontrado['data_nascimento']}\n"
-                    f"Status: {cliente_encontrado['status']}"
-                )
+            if sucesso:
+                mensagem_alerta = "Cliente adicionado com sucesso!"
             else:
                 label_erro_crud.configure(
-                    text="Erro: Nenhum cliente localizado!",
+                    text="Erro ao salvar no banco. Verifique os dados.",
                     text_color="#e74c3c"
                 )
                 return
 
-        elif chamar_acao == "Atualizar":                        # localiza pelo CPF e atualiza os demais campos
-            atualizou = False
-            for cliente in bd_clientes:
-                if cliente["cpf_cnpj"] == v1:
-                    cliente["nome_completo"]   = v2
-                    cliente["email"]           = v3
-                    cliente["sexo"]            = v4
-                    cliente["telefone"]        = v5
-                    cliente["data_nascimento"] = v6
-                    cliente["status"]          = v7
-                    atualizou = True
-                    break
+        elif chamar_acao == "Pesquisar":
+            # Busca no banco pelo campo preenchido pelo usuário
+            cliente = None
 
-            if atualizou:
-                mensagem_alerta = "Dados atualizados com sucesso"
+            if v1:
+                cliente = crud.read_pessoa_por_cpf(v1)          # busca pelo CPF
+            elif v2:
+                cliente = crud.read_pessoa_por_nome(v2)         # busca pelo nome
+            elif v5:
+                cliente = crud.read_pessoa_por_telefone(v5)     # busca pelo telefone
+
+            if cliente:
+                mensagem_alerta = (
+                    f"Cliente encontrado!\n\n"
+                    f"CPF/CNPJ: {cliente['cpf_cnpj']}\n"
+                    f"Nome: {cliente['nome_completo']}\n"
+                    f"Email: {cliente['email']}\n"
+                    f"Sexo: {cliente['sexo']}\n"
+                    f"Telefone: {cliente['telefone']}\n"
+                    f"Nascimento: {cliente['data_nascimento']}\n"
+                    f"Status: {cliente['status']}"
+                )
             else:
                 label_erro_crud.configure(
-                    text="Erro: CPF/CNPJ não cadastrado para atualização!",
+                    text="Nenhum cliente localizado!",
+                    text_color="#e74c3c"
+                )
+                return
+
+        elif chamar_acao == "Atualizar":
+            # Atualiza no banco pelo CPF — retorna True se encontrou e atualizou
+            sucesso = crud.update_pessoa(v1, v2, v3, v4, v5, v6, v7)
+
+            if sucesso:
+                mensagem_alerta = "Dados atualizados com sucesso!"
+            else:
+                label_erro_crud.configure(
+                    text="CPF/CNPJ não encontrado para atualização!",
                     text_color="#e74c3c"
                 )
                 return
 
         elif chamar_acao == "Remover":
-            # PASSO 1: verifica se o cliente existe antes de abrir qualquer popup
-            posicao_remover = -1
-            for i, cliente in enumerate(bd_clientes):
-                if cliente["cpf_cnpj"] == v1:                  # busca exclusivamente pelo CPF
-                    posicao_remover = i
-                    break
+            # PASSO 1: busca o cliente no banco antes de abrir qualquer popup
+            cliente_alvo = crud.read_pessoa_por_cpf(v1)
 
-            # PASSO 2: cliente não encontrado → mostra erro e encerra, SEM abrir popup
-            if posicao_remover == -1:
+            # PASSO 2: não encontrou → mostra erro e para aqui, SEM abrir popup
+            if cliente_alvo is None:
                 label_erro_crud.configure(
                     text="Cliente não consta no sistema. Confira os dados informados.",
                     text_color="#e74c3c"
                 )
                 return
 
-            # PASSO 3: cliente existe → exibe popup de confirmação com os dados dele
-            cliente_alvo = bd_clientes[posicao_remover]
-
+            # PASSO 3: encontrou → abre popup de confirmação com os dados do cliente
             popup_confirm = ctk.CTkToplevel(janela)
             popup_confirm.title("Confirmar Exclusão")
             popup_confirm.geometry("420x230")
-            popup_confirm.grab_set()                            # bloqueia a janela principal durante a confirmação
+            popup_confirm.grab_set()                            # trava a janela principal durante a confirmação
 
             ctk.CTkLabel(
                 popup_confirm,
@@ -379,10 +361,14 @@ def confirma_crud():
             frame_btns = ctk.CTkFrame(popup_confirm, fg_color="transparent")
             frame_btns.pack()
 
-            def confirmar_exclusao():                           # executado somente se o usuário clicar "Sim"
-                del bd_clientes[posicao_remover]
+            def confirmar_exclusao():
+                # PASSO 4: só deleta no banco quando o usuário clicar "Sim"
+                sucesso = crud.delete_pessoa(cliente_alvo["cpf_cnpj"])
                 popup_confirm.destroy()
-                mostrar_msg_sucesso("Cliente removido com sucesso!")
+                if sucesso:
+                    mostrar_msg_sucesso("Cliente removido com sucesso!")
+                else:
+                    mostrar_msg_sucesso("Erro ao remover. Tente novamente.")
 
             ctk.CTkButton(
                 frame_btns,
@@ -402,155 +388,138 @@ def confirma_crud():
                 command=popup_confirm.destroy                   # fecha sem fazer nada
             ).pack(side="left", padx=10)
 
-            return  # interrompe o fluxo: o sucesso só vem via confirmar_exclusao()
+            return  # interrompe o fluxo — sucesso só vem dentro de confirmar_exclusao()
 
 
-    # ====== 2. CRUD DE APÓLICES ======
+    # ====== CRUD DE APÓLICES ======
 
     elif painel_usado == "Apólices":
 
         if chamar_acao == "Acrescentar":
-            nova_apolice = {
-                "id_apolice": v1,
-                "id_cotacao": v2,
-                "inicio":     v3,
-                "fim":        v4
-            }
-            bd_apolices.append(nova_apolice)
-            mensagem_alerta = "Apólice adicionada com sucesso"
+            sucesso = crud.create_apolice(v2, v3, v4)          # id_cotacao, inicio, fim
+
+            if sucesso:
+                mensagem_alerta = "Apólice adicionada com sucesso!"
+            else:
+                label_erro_crud.configure(
+                    text="Erro ao salvar apólice no banco.",
+                    text_color="#e74c3c"
+                )
+                return
 
         elif chamar_acao == "Pesquisar":
-            apolice_encontrada = None
-            for apolice in bd_apolices:
-                if (v1 and apolice["id_apolice"] == v1) or \
-                   (v2 and apolice["id_cotacao"] == v2):
-                    apolice_encontrada = apolice
-                    break
+            apolice = None
 
-            if apolice_encontrada:
+            if v1:
+                apolice = crud.read_apolice(v1)                 # busca pelo ID da apólice
+            elif v2:
+                apolice = crud.read_apolice_por_cotacao(v2)     # busca pelo ID da cotação
+
+            if apolice:
                 mensagem_alerta = (
                     f"Apólice localizada!\n\n"
-                    f"ID Apólice: {apolice_encontrada['id_apolice']}\n"
-                    f"ID Cotação: {apolice_encontrada['id_cotacao']}\n"
-                    f"Início Vigência: {apolice_encontrada['inicio']}\n"
-                    f"Fim Vigência: {apolice_encontrada['fim']}"
+                    f"ID Apólice: {apolice['id_apolice']}\n"
+                    f"ID Cotação: {apolice['id_cotacao']}\n"
+                    f"Início Vigência: {apolice['inicio']}\n"
+                    f"Fim Vigência: {apolice['fim']}"
                 )
             else:
                 label_erro_crud.configure(
-                    text="Erro: Nenhuma apólice localizada!",
+                    text="Nenhuma apólice localizada!",
                     text_color="#e74c3c"
                 )
                 return
 
-        elif chamar_acao == "Atualizar":                        # localiza pelo ID da apólice e atualiza datas
-            atualizou = False
-            for apolice in bd_apolices:
-                if apolice["id_apolice"] == v1:
-                    apolice["inicio"] = v3
-                    apolice["fim"]    = v4
-                    atualizou = True
-                    break
+        elif chamar_acao == "Atualizar":
+            sucesso = crud.update_apolice(v1, v3, v4)          # id_apolice, inicio, fim
 
-            if atualizou:
-                mensagem_alerta = "Apólice atualizada com sucesso"
+            if sucesso:
+                mensagem_alerta = "Apólice atualizada com sucesso!"
             else:
                 label_erro_crud.configure(
-                    text="Erro: ID de apólice não cadastrado!",
+                    text="ID de apólice não encontrado!",
                     text_color="#e74c3c"
                 )
                 return
 
-        elif chamar_acao == "Remover":                          # localiza pelo ID da apólice ou cotação e remove
-            posicao_remover = -1
-            for i, apolice in enumerate(bd_apolices):
-                if (v1 and apolice["id_apolice"] == v1) or \
-                   (v2 and apolice["id_cotacao"] == v2):
-                    posicao_remover = i
-                    break
+        elif chamar_acao == "Remover":
+            sucesso = crud.delete_apolice(v1)                   # deleta pelo ID da apólice
 
-            if posicao_remover != -1:
-                del bd_apolices[posicao_remover]
-                mensagem_alerta = "Apólice removida com sucesso"
+            if sucesso:
+                mensagem_alerta = "Apólice removida com sucesso!"
             else:
                 label_erro_crud.configure(
-                    text="Erro: Nenhuma apólice encontrada para remoção!",
+                    text="Nenhuma apólice encontrada para remoção!",
                     text_color="#e74c3c"
                 )
                 return
 
 
-    # ====== 3. CRUD DE VENDAS ======
+    # ====== CRUD DE VENDAS (cotacoes) ======
 
     elif painel_usado == "Vendas":
 
         if chamar_acao == "Acrescentar":
-            sucesso = crud.create_pessoa(v1, v2, v3, v4, v5, v6, v7)
+            # id_cotacao é gerado automaticamente pelo banco, então passa os outros campos
+            sucesso = crud.create_cotacao(v2, v3, v4, v5, v6)  # id_pessoa, id_seg, id_plano, valor, data
+
             if sucesso:
-                mensagem_alerta = "Cliente adicionado com sucesso!"
-            else:
-                label_erro_crud.configure(text="Erro ao salvar no banco!", text_color="#e74c3c")
-            return
-
-        elif chamar_acao == "Pesquisar":
-            cliente_encontrado = None
-            if v1:
-                cliente_encontrado = crud.read_pessoa_por_cpf(v1)
-            elif v2:
-                cliente_encontrado = crud.read_pessoa_por_nome(v2)
-            elif v5:
-                cliente_encontrado = crud.read_pessoa_por_telefone(v5)
-
-        if cliente_encontrado:
-            mensagem_alerta = (
-            f"Cliente encontrado!\n\n"
-            f"CPF/CNPJ: {cliente_encontrado['cpf_cnpj']}\n"
-            f"Nome: {cliente_encontrado['nome_completo']}\n"
-            f"Email: {cliente_encontrado['email']}\n"
-            f"Telefone: {cliente_encontrado['telefone']}\n"
-            f"Status: {cliente_encontrado['status']}"
-        )
-        else:
-            label_erro_crud.configure(text="Nenhum cliente localizado!", text_color="#e74c3c")
-            return
-
-    elif chamar_acao == "Atualizar":
-        sucesso = crud.update_pessoa(v1, v2, v3, v4, v5, v6, v7)
-        if sucesso:
-            mensagem_alerta = "Dados atualizados com sucesso!"
-        else:
-            label_erro_crud.configure(text="CPF não encontrado para atualização!", text_color="#e74c3c")
-        return
-
-        if atualizou:
-            mensagem_alerta = "Venda modificada com sucesso"
-        else:
-            label_erro_crud.configure(
-                text="Erro: ID de cotação não cadastrado!",
-                text_color="#e74c3c"
-            )
-            return
-
-    elif chamar_acao == "Remover":                          # localiza pelo ID da cotação ou pessoa e remove
-         posicao_remover = -1
-         for i, venda in enumerate(bd_vendas):
-            if (v1 and venda["id_cotacao"] == v1) or \
-                (v2 and venda["id_pessoa"] == v2):
-                posicao_remover = i
-                break
-
-            if posicao_remover != -1:
-                del bd_vendas[posicao_remover]
-                mensagem_alerta = "Venda excluída com sucesso"
+                mensagem_alerta = "Venda registrada com sucesso!"
             else:
                 label_erro_crud.configure(
-                    text="Erro: Registro de venda não encontrado para remoção!",
+                    text="Erro ao registrar venda no banco.",
                     text_color="#e74c3c"
                 )
                 return
-            def confirmar_exclusao():
-                crud.delete_pessoa(cliente_alvo["cpf_cnpj"])
-                popup_confirm.destroy()
-                mostrar_msg_sucesso("Cliente removido com sucesso!")
+
+        elif chamar_acao == "Pesquisar":
+            venda = None
+
+            if v1:
+                venda = crud.read_cotacao(v1)                   # busca pelo ID da cotação
+            elif v2:
+                venda = crud.read_cotacao_por_pessoa(v2)        # busca pelo ID da pessoa
+
+            if venda:
+                mensagem_alerta = (
+                    f"Venda encontrada!\n\n"
+                    f"ID Cotação: {venda['id_cotacao']}\n"
+                    f"ID Pessoa: {venda['id_pessoa']}\n"
+                    f"ID Seguradora: {venda['id_seguradora']}\n"
+                    f"ID Plano: {venda['id_plano']}\n"
+                    f"Valor: R$ {venda['valor_cotacao']}\n"
+                    f"Data: {venda['data_cotacao']}"
+                )
+            else:
+                label_erro_crud.configure(
+                    text="Nenhuma venda localizada!",
+                    text_color="#e74c3c"
+                )
+                return
+
+        elif chamar_acao == "Atualizar":
+            sucesso = crud.update_cotacao(v1, v2, v3, v4, v5, v6)  # id_cotacao, id_pessoa, id_seg, id_plano, valor, data
+
+            if sucesso:
+                mensagem_alerta = "Venda atualizada com sucesso!"
+            else:
+                label_erro_crud.configure(
+                    text="ID de cotação não encontrado!",
+                    text_color="#e74c3c"
+                )
+                return
+
+        elif chamar_acao == "Remover":
+            sucesso = crud.delete_cotacao(v1)                   # deleta pelo ID da cotação
+
+            if sucesso:
+                mensagem_alerta = "Venda removida com sucesso!"
+            else:
+                label_erro_crud.configure(
+                    text="Nenhuma venda encontrada para remoção!",
+                    text_color="#e74c3c"
+                )
+                return
 
     # --- Limpeza dos campos após operação bem-sucedida ---
     for campo in [campo1_ativo, campo2_ativo, campo3_ativo,
@@ -608,35 +577,35 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl5, placeholder5, validador5 = "Telefone:",       "Preenchido automaticamente",    validador_telefone
 
         else:                                                   # Acrescentar e Atualizar usam todos os campos
-            lbl1, placeholder1, validador1 = "CPF/CNPJ (Max 11):",            "Digite apenas números",    validador_cpf
-            lbl2, placeholder2, validador2 = "Nome Completo:",                "Nome da pessoa",           None
-            lbl3, placeholder3, validador3 = "Email:",                        "exemplo@email.com",        None
-            lbl4, placeholder4, validador4 = "Sexo (M/F):",                   "Apenas 1 caractere",       None
-            lbl5, placeholder5, validador5 = "Telefone (Max 11):",            "DDD + Número",             validador_telefone
-            lbl6, placeholder6, validador6 = "Data de Nascimento (AAAA-MM-DD):", "Formato do Banco (Date)", None
-            lbl7, placeholder7, validador7 = "Status (Ativo/Inativo):",       "Status cadastral",         None
+            lbl1, placeholder1, validador1 = "CPF/CNPJ (Max 11):",               "Digite apenas números",       validador_cpf
+            lbl2, placeholder2, validador2 = "Nome Completo:",                   "Nome da pessoa",              None
+            lbl3, placeholder3, validador3 = "Email:",                           "exemplo@email.com",           None
+            lbl4, placeholder4, validador4 = "Sexo (M/F):",                      "Apenas 1 caractere",          None
+            lbl5, placeholder5, validador5 = "Telefone (Max 11):",               "DDD + Número",                validador_telefone
+            lbl6, placeholder6, validador6 = "Data de Nascimento (AAAA-MM-DD):", "Formato do Banco (Date)",     None
+            lbl7, placeholder7, validador7 = "Status (Ativo/Inativo):",          "Status cadastral",            None
 
     elif nome_secao == "Apólices":
         if acao in ["Pesquisar", "Remover"]:                    # busca por ID da apólice ou cotação
             lbl1, placeholder1, validador1 = "ID Apólice (Filtro):", "Filtrar por ID da Apólice", validador_apolice
             lbl2, placeholder2, validador2 = "ID Cotação (Filtro):", "Filtrar por ID da Cotação", validador_venda
         else:                                                   # Acrescentar e Atualizar usam todos os campos
-            lbl1, placeholder1, validador1 = "ID Apólice (id_apolice):", "Código identificador",          validador_apolice
-            lbl2, placeholder2, validador2 = "ID Cotação (id_cotacao):", "Chave estrangeira de Cotações", validador_venda
-            lbl3, placeholder3, validador3 = "Data Início (AAAA-MM-DD):", "Início do seguro",             None
-            lbl4, placeholder4, validador4 = "Data Fim (AAAA-MM-DD):",   "Fim do seguro",                None
+            lbl1, placeholder1, validador1 = "ID Apólice (id_apolice):", "Código identificador",           validador_apolice
+            lbl2, placeholder2, validador2 = "ID Cotação (id_cotacao):", "Chave estrangeira de Cotações",  validador_venda
+            lbl3, placeholder3, validador3 = "Data Início (AAAA-MM-DD):", "Início do seguro",              None
+            lbl4, placeholder4, validador4 = "Data Fim (AAAA-MM-DD):",    "Fim do seguro",                 None
 
     elif nome_secao == "Vendas":
         if acao in ["Pesquisar", "Remover"]:                    # busca por ID da cotação ou pessoa
-            lbl1, placeholder1, validador1 = "ID Cotação :", "Filtrar por Cotação",       validador_venda
-            lbl2, placeholder2, validador2 = "ID Pessoa :",  "Filtrar por ID do cliente", None
+            lbl1, placeholder1, validador1 = "ID Cotação :", "Filtrar por Cotação",        validador_venda
+            lbl2, placeholder2, validador2 = "ID Pessoa :",  "Filtrar por ID do cliente",  None
         else:                                                   # Acrescentar e Atualizar usam todos os campos
-            lbl1, placeholder1, validador1 = "ID Cotação (id_cotacao):", "Código identificador",          validador_venda
-            lbl2, placeholder2, validador2 = "ID Pessoa (id_pessoa):",   "Chave estrangeira de Pessoa",   None
+            lbl1, placeholder1, validador1 = "ID Cotação (id_cotacao):", "Código identificador",            validador_venda
+            lbl2, placeholder2, validador2 = "ID Pessoa (id_pessoa):",   "Chave estrangeira de Pessoa",     None
             lbl3, placeholder3, validador3 = "ID Seguradora:",           "Chave estrangeira de Seguradora", None
-            lbl4, placeholder4, validador4 = "ID Plano:",                "Chave estrangeira de Plano",    None
-            lbl5, placeholder5, validador5 = "Valor da Cotação R$:",     "Preço calculado",               None
-            lbl6, placeholder6, validador6 = "Data Cotação (AAAA-MM-DD):", "Data do processamento",       None
+            lbl4, placeholder4, validador4 = "ID Plano:",                "Chave estrangeira de Plano",      None
+            lbl5, placeholder5, validador5 = "Valor da Cotação R$:",     "Preço calculado",                 None
+            lbl6, placeholder6, validador6 = "Data Cotação (AAAA-MM-DD):", "Data do processamento",         None
 
     # ---- Renderiza os campos conforme as variáveis definidas acima ----
 
@@ -699,7 +668,7 @@ def gerar_campos_formulario(acao, nome_secao):
                 campo.configure(state="disabled")
 
         def buscar_cliente_por_cpf(event=None):
-            """Dispara ao sair do campo CPF (FocusOut ou Enter) e preenche os demais campos."""
+            # Dispara ao sair do campo CPF (FocusOut ou Enter) e preenche os demais campos
             cpf_digitado = campo1_ativo.get().strip()
 
             # Limpa campos automáticos e erro antes de cada nova busca
@@ -713,21 +682,17 @@ def gerar_campos_formulario(acao, nome_secao):
             if not cpf_digitado:                                # se o CPF estiver vazio, não faz nada
                 return
 
-            # Percorre o bd procurando o CPF digitado
-            cliente_encontrado = None
-            for cliente in bd_clientes:
-                if cliente["cpf_cnpj"] == cpf_digitado:
-                    cliente_encontrado = cliente
-                    break
+            # Busca o cliente diretamente no banco pelo CPF
+            cliente_encontrado = crud.read_pessoa_por_cpf(str(cpf_digitado))
 
-            if cliente_encontrado is None:                      # CPF não existe no bd
+            if cliente_encontrado is None:                      # CPF não existe no banco
                 label_erro_crud.configure(
                     text="Cliente não consta no sistema. Confira os dados informados.",
                     text_color="#e74c3c"
                 )
                 return
 
-            # CPF encontrado: preenche os campos automaticamente com os dados do cliente
+            # CPF encontrado: preenche os campos automaticamente com os dados do banco
             for campo, valor in [
                 (campo2_ativo, cliente_encontrado["nome_completo"]),
                 (campo3_ativo, cliente_encontrado["email"]),
