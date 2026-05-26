@@ -1,5 +1,6 @@
 import customtkinter as ctk                 # Importei a biblioteca customtkinter para criar a interface gráfica
-from config import USUARIO, SENHA          # Importando as credenciais de login do arquivo config.py
+from config import USUARIO, SENHA    
+import crud                            # Importa as funções de CRUD para manipular os dados
 
 ctk.set_appearance_mode("dark")            # escolhi tema escuro
 ctk.set_default_color_theme("blue")       # Cor das janelas
@@ -209,7 +210,7 @@ frame_conteudo.pack(side="right", fill="both", expand=True)
 
 # ============= VARIÁVEIS GLOBAIS DOS INPUTS =============
 
-campo1_ativo  = None   # armazena referência ao widget Entry do campo 1 ativo no formulário
+campo1_ativo  = None   # armazena referência  do campo 1 ativo no formulário
 campo2_ativo  = None
 campo3_ativo  = None
 campo4_ativo  = None
@@ -285,6 +286,7 @@ def confirma_crud():
                 "data_nascimento": v6,
                 "status":          v7
             }
+            crud.create_pessoa(str(v1), str(v2), str(v3), str(v4), str(v5), str(v6), str(v7))
             bd_clientes.append(novo_cliente)
             mensagem_alerta = "Cliente adicionado com sucesso"
 
@@ -633,8 +635,8 @@ def gerar_campos_formulario(acao, nome_secao):
 
     elif nome_secao == "Vendas":
         if acao in ["Pesquisar", "Remover"]:                    # busca por ID da cotação ou pessoa
-            lbl1, placeholder1, validador1 = "ID Cotação (Filtro):", "Filtrar por Cotação",       validador_venda
-            lbl2, placeholder2, validador2 = "ID Pessoa (Filtro):",  "Filtrar por ID do cliente", None
+            lbl1, placeholder1, validador1 = "ID Cotação :", "Filtrar por Cotação",       validador_venda
+            lbl2, placeholder2, validador2 = "ID Pessoa :",  "Filtrar por ID do cliente", None
         else:                                                   # Acrescentar e Atualizar usam todos os campos
             lbl1, placeholder1, validador1 = "ID Cotação (id_cotacao):", "Código identificador",          validador_venda
             lbl2, placeholder2, validador2 = "ID Pessoa (id_pessoa):",   "Chave estrangeira de Pessoa",   None

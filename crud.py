@@ -1,583 +1,346 @@
-from conn import conexao, fechar_conexao
+# crud.py
+# Arquivo com todas as funções de acesso ao banco de dados.
+# Cada função faz UMA operação: criar, ler, atualizar ou deletar.
 
-conn = conexao()
+from conn import conexao  # importa a função que abre a conexão
+
+# Abre a conexão UMA VEZ só quando o arquivo é carregado.
+# O cursor fica aberto para todas as funções usarem.
+# Quando integrar com interface, NÃO feche aqui — deixe aberto.
+conn   = conexao()
 cursor = conn.cursor()
 
 
 # ========================================= #
 #                  CREATE                   #
 # ========================================= #
+
 def create_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
-    global conn, cursor
+    # Insere um novo cliente na tabela pessoa
     try:
-        conn
         cursor.execute(
-            "INSERT INTO pessoa (cpf_cnpj, nome_completo, email, sexo, telefone, data_nascimento, status) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            """INSERT INTO pessoa 
+               (cpf_cnpj, nome_completo, email, sexo, telefone, data_nascimento, status) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
             (cpf, nome, email, sexo, telefone, data_nasc, status)
         )
-        conn.commit()
+        conn.commit()   # salva a operação no banco
         print("Pessoa criada com sucesso!")
+        return True     # retorna True para a interface saber que deu certo
 
     except Exception as e:
+        conn.rollback() # desfaz qualquer alteração parcial se der erro
         print("Erro ao criar pessoa:", e)
-        
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
+        return False    # retorna False para a interface mostrar erro
 
 
-# CREATE - Apólice
 def create_apolice(id_cotacao, inicio, fim):
-    global conn, cursor
+    # Insere uma nova apólice vinculada a uma cotação
     try:
-        conexao()
         cursor.execute(
-            "INSERT INTO apolice (id_cotacao, inicio, fim) VALUES (%s, %s, %s)",
+            """INSERT INTO apolice (id_cotacao, inicio, fim) 
+               VALUES (%s, %s, %s)""",
             (id_cotacao, inicio, fim)
         )
         conn.commit()
         print("Apólice criada com sucesso!")
-        fechar_conexao(conn)
-        
+        return True
+
     except Exception as e:
+        conn.rollback()
         print("Erro ao criar apólice:", e)
-    
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
+        return False
 
 
-# CREATE - Bens
-def create_bens(id_pessoa, tipo_bem, desc_bem, valor_estimado):
-    global conn, cursor
-    try:
-        conexao()
-        cursor.execute(
-            "INSERT INTO bens (id_pessoa, tipo_bem, descricao_bem, valor_estimado) VALUES (%s, %s, %s, %s)",
-            (id_pessoa, tipo_bem, desc_bem, valor_estimado)
-        )
-        conn.commit()
-        print("Bem criado com sucesso!")
-        fechar_conexao(conn)
-        
-    except Exception as e:
-        print("Erro ao criar bem:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-# CREATE - Cotação
 def create_cotacao(id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao):
-    global conn, cursor
+    # Insere uma nova cotação no banco
     try:
-        conexao()
         cursor.execute(
-            "INSERT INTO cotacoes (id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao) VALUES (%s, %s, %s, %s, %s)",
+            """INSERT INTO cotacoes 
+               (id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao) 
+               VALUES (%s, %s, %s, %s, %s)""",
             (id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao)
         )
         conn.commit()
         print("Cotação criada com sucesso!")
-        fechar_conexao(conn)
-        
+        return True
+
     except Exception as e:
+        conn.rollback()
         print("Erro ao criar cotação:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
+        return False
 
-
-# CREATE - Plano
-def create_plano(id_seguradora, tipo_cobertura, nome_plano):
-    global conn, cursor
-    try:
-        conexao()
-        cursor.execute(
-            "INSERT INTO plano (id_seguradora, tipo_cobertura, nome_plano) VALUES (%s, %s, %s)",
-            (id_seguradora, tipo_cobertura, nome_plano)
-        )
-        conn.commit()
-        print("Plano criado com sucesso!")
-        fechar_conexao(conn)
-        
-    except Exception as e:
-        print("Erro ao criar plano:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-# CREATE - Seguradora
-def create_seguradora(nome_fant, cnpj, tel_suporte):
-    global conn, cursor
-    try:
-        conexao()
-        cursor.execute(
-            "INSERT INTO seguradora (nome_fantasia, cnpj, telefone_suporte) VALUES (%s, %s, %s)",
-            (nome_fant, cnpj, tel_suporte)
-        )
-        conn.commit()
-        print("Seguradora criada com sucesso!")
-        fechar_conexao(conn)
-        
-    except Exception as e:
-        print("Erro ao criar seguradora:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
 
 # ========================================= #
 #                   READ                    #
 # ========================================= #
-# READ - Pessoa
-def read_pessoa(cpf):
-    global conn, cursor
+
+def read_pessoa_por_cpf(cpf):
+    # Busca um cliente pelo CPF e retorna um dicionário com os dados
+    # Retorna None se não encontrar
     try:
-        conn
-        cursor.execute("SELECT * FROM pessoa WHERE cpf_cnpj = %s", (cpf,))
-        pessoa = cursor.fetchone()
-
-        if pessoa:
-            print("Pessoa encontrada:", pessoa)
-        else:
-            print("Pessoa não encontrada.")
-    except Exception as e:
-        print("Erro ao ler pessoa:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-def read_todas_pessoas():
-    global conn, cursor
-    try:
-        conn
-        cursor.execute("""
-                       SELECT 
-                        id_pessoa,
-                        nome_completo,
-                        email,
-                        sexo,
-                        telefone,
-                        TO_CHAR(data_nascimento, 'DD/MM/YYYY'),
-                        status
-                       FROM Pessoa;
-                       """)
-        pessoas = cursor.fetchall()
-
-        for i in pessoas:
-            print(i, end="\n\n")
-
-    except Exception as e:
-        print("Erro ao ler todas as pessoas:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-# READ - Apólice
-def read_apolice(id_apolice):
-    global conn, cursor
-    try:
-        conn
         cursor.execute(
-            "SELECT * FROM apolice WHERE id_apolice = %s",
+            "SELECT cpf_cnpj, nome_completo, email, sexo, telefone, data_nascimento, status FROM pessoa WHERE cpf_cnpj = %s",
+            (cpf,)
+        )
+        resultado = cursor.fetchone()  # pega apenas a primeira linha encontrada
+
+        if resultado is None:
+            return None  # cliente não existe
+
+        # Converte a tupla retornada pelo banco em dicionário
+        # O banco retorna: (cpf, nome, email, sexo, tel, nasc, status)
+        cliente = {
+            "cpf_cnpj":        resultado[0],
+            "nome_completo":   resultado[1],
+            "email":           resultado[2],
+            "sexo":            resultado[3],
+            "telefone":        resultado[4],
+            "data_nascimento": str(resultado[5]),  # converte data para texto
+            "status":          resultado[6]
+        }
+        return cliente
+
+    except Exception as e:
+        print("Erro ao buscar pessoa:", e)
+        return None
+
+
+def read_pessoa_por_nome(nome):
+    # Busca cliente pelo nome (busca parcial com ILIKE)
+    try:
+        cursor.execute(
+            "SELECT cpf_cnpj, nome_completo, email, sexo, telefone, data_nascimento, status FROM pessoa WHERE LOWER(nome_completo) = LOWER(%s)",
+            (nome,)
+        )
+        resultado = cursor.fetchone()
+
+        if resultado is None:
+            return None
+
+        cliente = {
+            "cpf_cnpj":        resultado[0],
+            "nome_completo":   resultado[1],
+            "email":           resultado[2],
+            "sexo":            resultado[3],
+            "telefone":        resultado[4],
+            "data_nascimento": str(resultado[5]),
+            "status":          resultado[6]
+        }
+        return cliente
+
+    except Exception as e:
+        print("Erro ao buscar pessoa por nome:", e)
+        return None
+
+
+def read_pessoa_por_telefone(telefone):
+    # Busca cliente pelo telefone
+    try:
+        cursor.execute(
+            "SELECT cpf_cnpj, nome_completo, email, sexo, telefone, data_nascimento, status FROM pessoa WHERE telefone = %s",
+            (telefone,)
+        )
+        resultado = cursor.fetchone()
+
+        if resultado is None:
+            return None
+
+        cliente = {
+            "cpf_cnpj":        resultado[0],
+            "nome_completo":   resultado[1],
+            "email":           resultado[2],
+            "sexo":            resultado[3],
+            "telefone":        resultado[4],
+            "data_nascimento": str(resultado[5]),
+            "status":          resultado[6]
+        }
+        return cliente
+
+    except Exception as e:
+        print("Erro ao buscar pessoa por telefone:", e)
+        return None
+
+
+def read_apolice(id_apolice):
+    # Busca uma apólice pelo ID e retorna dicionário ou None
+    try:
+        cursor.execute(
+            "SELECT id_apolice, id_cotacao, inicio, fim FROM apolice WHERE id_apolice = %s",
             (id_apolice,)
         )
-        apolice = cursor.fetchone()
+        resultado = cursor.fetchone()
 
-        if apolice:
-            print("Apólice encontrada:", apolice)
-        else:
-            print("Apólice não encontrada.")
-    except Exception as e:
-        print("Erro ao ler apólice:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
+        if resultado is None:
+            return None
 
-
-def read_todas_apolices():
-    global conn, cursor
-    try:
-        conn
-        cursor.execute("SELECT * FROM apolice")
-        apolices = cursor.fetchall()
-
-        for i in apolices:
-            print(i, end="\n\n")
-            
-    except Exception as e:
-        print("Erro ao ler todas as apólices:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-# READ - Bens
-def read_bens(id_pessoa):
-    global conn, cursor
-    try:
-        conn
-        cursor.execute(
-            "SELECT * FROM bens WHERE id_pessoa = %s",
-            (id_pessoa,)
-        )
-        bens = cursor.fetchall()
-
-        if bens:
-            print("Bens encontrados:", bens)
-        else:
-            print("Nenhum bem encontrado para essa pessoa.") 
+        apolice = {
+            "id_apolice": resultado[0],
+            "id_cotacao": resultado[1],
+            "inicio":     str(resultado[2]),
+            "fim":        str(resultado[3])
+        }
+        return apolice
 
     except Exception as e:
-        print("Erro ao ler bens:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
+        print("Erro ao buscar apólice:", e)
+        return None
 
 
-def read_todos_bens():
-    global conn, cursor
-    try:
-        conn
-        cursor.execute("SELECT * FROM bens")
-        bens = cursor.fetchall()
-
-        for i in bens:
-            print(i, end="\n\n")
-
-    except Exception as e:
-        print("Erro ao ler todos os bens:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-# READ - Cotação por pessoa
-def read_cotacao_por_pessoa(id_pessoa):
-    global conn, cursor
-    try:
-        conn
-        cursor.execute(
-            "SELECT * FROM cotacoes WHERE id_pessoa = %s",
-            (id_pessoa,)
-        )
-        cotacoes = cursor.fetchall()
-
-        if cotacoes:
-            print("Cotações encontradas:", cotacoes)
-        else:
-            print("Nenhuma cotação encontrada para essa pessoa.")
-
-    except Exception as e:
-        print("Erro ao ler cotações:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-# READ - Cotação por ID
 def read_cotacao(id_cotacao):
-    global conn, cursor
+    # Busca uma cotação pelo ID e retorna dicionário ou None
     try:
-        conn
         cursor.execute(
-            "SELECT * FROM cotacoes WHERE id_cotacao = %s",
+            "SELECT id_cotacao, id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao FROM cotacoes WHERE id_cotacao = %s",
             (id_cotacao,)
         )
-        cotacao = cursor.fetchone()
+        resultado = cursor.fetchone()
 
-        if cotacao:
-            print("Cotação encontrada:", cotacao)
-        else:
-            print("Cotação não encontrada.")
+        if resultado is None:
+            return None
 
-    except Exception as e:
-        print("Erro ao ler cotação:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-# def read_todas_cotacoes():
-#     global conn, cursor
-#     try:
-#         conn
-#         cursor.execute("SELECT * FROM cotacoes")
-#         cotacoes = cursor.fetchall()
-
-#         for i in cotacoes:
-#             print(i)
-
-#     except Exception as e:
-#         print("Erro ao ler todas as cotações:", e)
-#     finally:
-#         cursor.close()
-#         fechar_conexao(conn)
-
-# Consulta com JOIN para melhor exibição dos dados
-def read_todas_cotacoes():
-    global conn, cursor
-
-    try:
-        conn
-        cursor.execute("""
-            SELECT
-                c.id_cotacao,
-                p.nome_completo AS cliente,
-                s.nome_fantasia AS seguradora,
-                pl.nome_plano AS plano,
-                pl.tipo_cobertura,
-                TO_CHAR(c.valor_cotacao, 'FM999G999G999D00'),
-                TO_CHAR(c.data_cotacao, 'DD/MM/YYYY')
-            FROM cotacoes c
-            JOIN pessoa p USING(id_pessoa)
-            JOIN seguradora s USING(id_seguradora)
-            JOIN plano pl USING(id_plano)
-            ORDER BY c.id_cotacao;
-        """)
-
-        cotacoes = cursor.fetchall()
-
-        for cotacao in cotacoes:
-            print(cotacao, end="\n\n")
+        venda = {
+            "id_cotacao":    resultado[0],
+            "id_pessoa":     resultado[1],
+            "id_seguradora": resultado[2],
+            "id_plano":      resultado[3],
+            "valor_cotacao": str(resultado[4]),
+            "data_cotacao":  str(resultado[5])
+        }
+        return venda
 
     except Exception as e:
-        print("Erro ao ler cotações completas:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
+        print("Erro ao buscar cotação:", e)
+        return None
 
-
-# READ - Plano
-def read_plano(id_plano):
-    global conn, cursor
-    try:
-        conn
-        cursor.execute(
-            "SELECT * FROM plano WHERE id_plano = %s",
-            (id_plano,)
-        )
-        plano = cursor.fetchone()
-
-        if plano:
-            print("Plano encontrado:", plano)
-        else:
-            print("Plano não encontrado.")
-
-    except Exception as e:
-        print("Erro ao ler plano:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-def read_todos_planos():
-    global conn, cursor
-    try:
-        conn
-        cursor.execute("""
-                        SELECT b.id_bem,
-                            p.nome_completo,
-                            b.tipo_bem,
-                            b.descricao_bem,
-                            TO_CHAR(b.valor_estimado,'FM999G999G999D00')
-                       FROM Bens b 
-                       JOIN Pessoa p USING(id_pessoa);""")
-        planos = cursor.fetchall()
-
-        for i in planos:
-            print(i, end="\n\n")
-
-    except Exception as e:
-        print("Erro ao ler todos os planos:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-# READ - Seguradora
-def read_seguradora(cnpj):
-    global conn, cursor
-    try:
-        conn
-        cursor.execute(
-            "SELECT * FROM seguradora WHERE cnpj = %s",
-            (cnpj,)
-        )
-        seguradora = cursor.fetchone()
-
-        if seguradora:
-            print("Seguradora encontrada:", seguradora)
-        else:
-            print("Seguradora não encontrada.")
-
-    except Exception as e:
-        print("Erro ao ler seguradora:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-def read_todas_seguradoras():
-    global conn, cursor
-    try:
-        conn
-        cursor.execute("SELECT * FROM seguradora")
-        seguradoras = cursor.fetchall()
-
-        for i in seguradoras:
-            print(i, end="\n\n")
-
-    except Exception as e:
-        print("Erro ao ler todas as seguradoras:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
 
 # ========================================= #
 #                  UPDATE                   #
 # ========================================= #
 
-# UPDATE
-# def update_pessoa(cpf_cnpj, nome, email, sexo, telefone, data_nasc, status):
-# def update_seguradora(id_seguradora, nome_fant, cnpj, tel_suporte):
-# def update_cotacao(id_cotacao, id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao):
-# def update_bem(id_bem, id_pessoa, bem, desc_bem, valor_estimado):
-# def update_plano(id_plano, id_seguradora, tipo_cobertura, nome_plano):
-# def update_apolice(id_apolice, cotacao, inicio, fim):
+def update_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
+    # Atualiza os dados de um cliente pelo CPF
+    # Retorna True se encontrou e atualizou, False se o CPF não existe
+    try:
+        cursor.execute(
+            """UPDATE pessoa 
+               SET nome_completo=%s, email=%s, sexo=%s, 
+                   telefone=%s, data_nascimento=%s, status=%s
+               WHERE cpf_cnpj = %s""",
+            (nome, email, sexo, telefone, data_nasc, status, cpf)
+        )
+        conn.commit()
+
+        # cursor.rowcount diz quantas linhas foram afetadas
+        # se for 0, significa que o CPF não foi encontrado
+        if cursor.rowcount == 0:
+            return False
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao atualizar pessoa:", e)
+        return False
+
+
+def update_apolice(id_apolice, inicio, fim):
+    # Atualiza as datas de vigência de uma apólice
+    try:
+        cursor.execute(
+            "UPDATE apolice SET inicio=%s, fim=%s WHERE id_apolice = %s",
+            (inicio, fim, id_apolice)
+        )
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return False
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao atualizar apólice:", e)
+        return False
+
+
+def update_cotacao(id_cotacao, id_pessoa, id_seguradora, id_plano, valor, data):
+    # Atualiza os dados de uma cotação pelo ID
+    try:
+        cursor.execute(
+            """UPDATE cotacoes 
+               SET id_pessoa=%s, id_seguradora=%s, id_plano=%s, 
+                   valor_cotacao=%s, data_cotacao=%s
+               WHERE id_cotacao = %s""",
+            (id_pessoa, id_seguradora, id_plano, valor, data, id_cotacao)
+        )
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return False
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao atualizar cotação:", e)
+        return False
 
 
 # ========================================= #
 #                  DELETE                   #
 # ========================================= #
-# DELETE - Pessoa
+
 def delete_pessoa(cpf):
-    global conn, cursor
+    # Remove um cliente da tabela pelo CPF
+    # Retorna True se removeu, False se não encontrou
     try:
-        conn
         cursor.execute(
             "DELETE FROM pessoa WHERE cpf_cnpj = %s",
             (cpf,)
         )
         conn.commit()
-        print("Pessoa deletada com sucesso!")
+
+        if cursor.rowcount == 0:
+            return False
+        return True
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao deletar pessoa:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
+        return False
 
 
-# DELETE - Seguradora
-def delete_seguradora(id_seguradora):
-    global conn, cursor
-    try:
-        conn
-        cursor.execute(
-            "DELETE FROM seguradora WHERE id_seguradora = %s",
-            (id_seguradora,)
-        )
-        conn.commit()
-        print("Seguradora deletada com sucesso!")
-
-    except Exception as e:
-        print("Erro ao deletar seguradora:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-# DELETE - Cotação
-def delete_cotacao(id_cotacao):
-    global conn, cursor
-    try:
-        conn
-        cursor.execute(
-            "DELETE FROM cotacao WHERE id_cotacao = %s",
-            (id_cotacao,)
-        )
-        conn.commit()
-        print("Cotação deletada com sucesso!")
-
-    except Exception as e:
-        print("Erro ao deletar cotação:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-# DELETE - Bem
-def delete_bem(id_bem):
-    global conn, cursor
-    try:
-        conn
-        cursor.execute(
-            "DELETE FROM bens WHERE id_bem = %s",
-            (id_bem,)
-        )
-        conn.commit()
-        print("Bem deletado com sucesso!")
-
-    except Exception as e:
-        print("Erro ao deletar bem:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-# DELETE - Plano
-def delete_plano(id_plano):
-    global conn, cursor
-    try:
-        conn
-        cursor.execute(
-            "DELETE FROM plano WHERE id_plano = %s",
-            (id_plano,)
-        )
-        conn.commit()
-        print("Plano deletado com sucesso!")
-
-    except Exception as e:
-        print("Erro ao deletar plano:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
-
-
-# DELETE - Apólice
 def delete_apolice(id_apolice):
-    global conn, cursor
+    # Remove uma apólice pelo ID
     try:
-        conn
         cursor.execute(
             "DELETE FROM apolice WHERE id_apolice = %s",
             (id_apolice,)
         )
         conn.commit()
-        print("Apólice deletada com sucesso!")
+
+        if cursor.rowcount == 0:
+            return False
+        return True
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao deletar apólice:", e)
-    finally:
-        cursor.close()
-        fechar_conexao(conn)
+        return False
 
-# ============= // ============= #
 
-# read_cotacao_por_pessoa(1)
-    
-# read_todas_seguradoras()
-# read_seguradora('01938018000156')
+def delete_cotacao(id_cotacao):
+    # Remove uma cotação pelo ID
+    try:
+        cursor.execute(
+            "DELETE FROM cotacoes WHERE id_cotacao = %s",
+            (id_cotacao,)
+        )
+        conn.commit()
 
-# read_todas_apolices()
+        if cursor.rowcount == 0:
+            return False
+        return True
 
-# read_todos_planos()
-
-# read_todas_cotacoes()
-read_todas_pessoas()
-
-# create_pessoa("58393923913", "Alexandre", "alexandre@email.com", "M", "123456789", "03-05-2006", "Ativo")
-# delete_pessoa(str(58393923913))
-
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao deletar cotação:", e)
+        return False

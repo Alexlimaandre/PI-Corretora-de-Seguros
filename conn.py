@@ -1,4 +1,4 @@
-import psycopg2 
+import psycopg2
 from psycopg2 import Error
 import config
 
@@ -13,7 +13,7 @@ def conexao():
             password=password,
             port="5432"
         )
-        print('connextado com sucesso')
+        print('conectado com sucesso')
         return conn
     
     except Exception as e:
@@ -25,3 +25,6 @@ def conexao():
 def fechar_conexao(conn):
     if conn:
         conn.close()
+
+conexao()
+fechar_conexao(conexao())
