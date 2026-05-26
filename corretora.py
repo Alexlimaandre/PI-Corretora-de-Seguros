@@ -40,7 +40,7 @@ validador_venda    = janela.register(limita_venda)
 validador_telefone = janela.register(limita_telefone)
 
 
-# ============= JANELA DE RESPOSTA (POPUP DE SUCESSO) =============
+# ============= JANELA DE RESPOSTA  =============
 
 def mostrar_msg_sucesso(mensagem):         # exibe janela de aviso após operações do CRUD
     popup = ctk.CTkToplevel(janela)        # cria uma nova janela pop-up
