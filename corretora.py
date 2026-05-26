@@ -851,8 +851,9 @@ def montar_estrutura_painel(nome):
     secao_painel_aberto = nome
 
     for w in frame_conteudo.winfo_children():                   # limpa o conteúdo anterior
-frame_conteudo = ctk.CTkFrame(frame_centro, fg_color="transparent")  # painel para exibir o conteúdo das seções
-frame_conteudo.pack(side="right", fill="both", expand=True)
+        w.destroy()
+    frame_conteudo = ctk.CTkFrame(frame_centro, fg_color="transparent")  # painel para exibir o conteúdo das seções
+    frame_conteudo.pack(side="right", fill="both", expand=True)
 
 
 # ============= VARIÁVEIS GLOBAIS DOS INPUTS =============
