@@ -484,70 +484,59 @@ def confirma_crud():
     elif painel_usado == "Vendas":
 
         if chamar_acao == "Acrescentar":
-            nova_venda = {
-                "id_cotacao":    v1,
-                "id_pessoa":     v2,
-                "id_seguradora": v3,
-                "id_plano":      v4,
-                "valor_cotacao": v5,
-                "data_cotacao":  v6
-            }
-            bd_vendas.append(nova_venda)
-            mensagem_alerta = "Venda registrada com sucesso"
+            sucesso = crud.create_pessoa(v1, v2, v3, v4, v5, v6, v7)
+            if sucesso:
+                mensagem_alerta = "Cliente adicionado com sucesso!"
+            else:
+                label_erro_crud.configure(text="Erro ao salvar no banco!", text_color="#e74c3c")
+            return
 
         elif chamar_acao == "Pesquisar":
-            venda_encontrada = None
-            for venda in bd_vendas:
-                if (v1 and venda["id_cotacao"] == v1) or \
-                   (v2 and venda["id_pessoa"] == v2):
-                    venda_encontrada = venda
-                    break
+            cliente_encontrado = None
+            if v1:
+                cliente_encontrado = crud.read_pessoa_por_cpf(v1)
+            elif v2:
+                cliente_encontrado = crud.read_pessoa_por_nome(v2)
+            elif v5:
+                cliente_encontrado = crud.read_pessoa_por_telefone(v5)
 
-            if venda_encontrada:
-                mensagem_alerta = (
-                    f"Dados da venda carregados!\n\n"
-                    f"ID Cotação: {venda_encontrada['id_cotacao']}\n"
-                    f"ID Pessoa: {venda_encontrada['id_pessoa']}\n"
-                    f"ID Seguradora: {venda_encontrada['id_seguradora']}\n"
-                    f"ID Plano: {venda_encontrada['id_plano']}\n"
-                    f"Valor: R$ {venda_encontrada['valor_cotacao']}\n"
-                    f"Data: {venda_encontrada['data_cotacao']}"
-                )
-            else:
-                label_erro_crud.configure(
-                    text="Erro: Registro de venda não localizado!",
-                    text_color="#e74c3c"
-                )
-                return
+        if cliente_encontrado:
+            mensagem_alerta = (
+            f"Cliente encontrado!\n\n"
+            f"CPF/CNPJ: {cliente_encontrado['cpf_cnpj']}\n"
+            f"Nome: {cliente_encontrado['nome_completo']}\n"
+            f"Email: {cliente_encontrado['email']}\n"
+            f"Telefone: {cliente_encontrado['telefone']}\n"
+            f"Status: {cliente_encontrado['status']}"
+        )
+        else:
+            label_erro_crud.configure(text="Nenhum cliente localizado!", text_color="#e74c3c")
+            return
 
-        elif chamar_acao == "Atualizar":                        # localiza pelo ID da cotação e atualiza os demais
-            atualizou = False
-            for venda in bd_vendas:
-                if venda["id_cotacao"] == v1:
-                    venda["id_pessoa"]     = v2
-                    venda["id_seguradora"] = v3
-                    venda["id_plano"]      = v4
-                    venda["valor_cotacao"] = v5
-                    venda["data_cotacao"]  = v6
-                    atualizou = True
-                    break
+    elif chamar_acao == "Atualizar":
+        sucesso = crud.update_pessoa(v1, v2, v3, v4, v5, v6, v7)
+        if sucesso:
+            mensagem_alerta = "Dados atualizados com sucesso!"
+        else:
+            label_erro_crud.configure(text="CPF não encontrado para atualização!", text_color="#e74c3c")
+        return
 
-            if atualizou:
-                mensagem_alerta = "Venda modificada com sucesso"
-            else:
-                label_erro_crud.configure(
-                    text="Erro: ID de cotação não cadastrado!",
-                    text_color="#e74c3c"
-                )
-                return
+        if atualizou:
+            mensagem_alerta = "Venda modificada com sucesso"
+        else:
+            label_erro_crud.configure(
+                text="Erro: ID de cotação não cadastrado!",
+                text_color="#e74c3c"
+            )
+            return
 
-        elif chamar_acao == "Remover":                          # localiza pelo ID da cotação ou pessoa e remove
-            posicao_remover = -1
-            for i, venda in enumerate(bd_vendas):
-                if (v1 and venda["id_cotacao"] == v1) or \
-                   (v2 and venda["id_pessoa"] == v2):
-                    posicao_remover = i
-                    break
+    elif chamar_acao == "Remover":                          # localiza pelo ID da cotação ou pessoa e remove
+         posicao_remover = -1
+         for i, venda in enumerate(bd_vendas):
+            if (v1 and venda["id_cotacao"] == v1) or \
+                (v2 and venda["id_pessoa"] == v2):
+                posicao_remover = i
+                break
 
             if posicao_remover != -1:
                 del bd_vendas[posicao_remover]
@@ -558,6 +547,10 @@ def confirma_crud():
                     text_color="#e74c3c"
                 )
                 return
+            def confirmar_exclusao():
+                crud.delete_pessoa(cliente_alvo["cpf_cnpj"])
+                popup_confirm.destroy()
+                mostrar_msg_sucesso("Cliente removido com sucesso!")
 
     # --- Limpeza dos campos após operação bem-sucedida ---
     for campo in [campo1_ativo, campo2_ativo, campo3_ativo,
