@@ -11,6 +11,8 @@ CREATE TABLE Pessoa (
                         status VARCHAR(10) NOT NULL
 );
 
+SELECT id_pessoa, nome_completo, email, sexo, telefone, TO_CHAR(data_nascimento, 'DD/MM/YYYY') AS data_nascimento, status FROM Pessoa;
+
 CREATE TABLE Bens (
                       id_bem SERIAL PRIMARY KEY,
                       id_pessoa INT NOT NULL,

@@ -1,0 +1,154 @@
+[1mdiff --git a/corretora.py b/corretora.py[m
+[1mindex cdf211d..6e0a8af 100644[m
+[1m--- a/corretora.py[m
+[1m+++ b/corretora.py[m
+[36m@@ -1,50 +1,330 @@[m
+[31m-import customtkinter as ctk                 # Importei a biblioteca customtkinter para criar a interface gráfica[m
+[31m-from config import USUARIO, SENHA          # Importando as credenciais de login do arquivo config.py[m
+[32m+[m[32m# =============================================================[m
+[32m+[m[32m# SISTEMA DE CORRETORA DE SEGUROS[m
+[32m+[m[32m# Disciplina: Fundamentos de Programação - 1º Semestre[m
+[32m+[m[32m# Descrição: Sistema com interface gráfica para gerenciar[m
+[32m+[m[32m#            clientes, apólices e vendas da corretora.[m
+[32m+[m[32m#            Banco de dados temporário em listas Python.[m
+[32m+[m[32m#            Futuramente será integrado com PostgreSQL.[m
+[32m+[m[32m# =============================================================[m
+ [m
+[31m-ctk.set_appearance_mode("dark")            # escolhi tema escuro[m
+[31m-ctk.set_default_color_theme("blue")       # Cor das janelas[m
+[32m+[m[32mimport customtkinter as ctk[m
+[32m+[m[32mfrom config import USUARIO, SENHA[m
+ [m
+[31m-janela = ctk.CTk()                         # Criou a janela principal[m
+[31m-janela.title("Corretora de Seguros")       # titulo da janela[m
+[31m-janela.geometry("850x650")                 # tamanho da janela[m
+ [m
+[32m+[m[32m# ---- Configuração visual da janela ----[m
+[32m+[m[32mctk.set_appearance_mode("dark")[m
+[32m+[m[32mctk.set_default_color_theme("blue")[m
+ [m
+[31m-# ============= BANCO DE DADOS TEMPORÁRIO =============[m
+[32m+[m[32mjanela = ctk.CTk()[m
+[32m+[m[32mjanela.title("Corretora de Seguros")[m
+[32m+[m[32mjanela.geometry("850x650")[m
+ [m
+[31m-bd_clientes = []                           # banco temporário até integração[m
+[31m-bd_apolices = [][m
+[31m-bd_vendas = [][m
+ [m
+[32m+[m[32m# =============================================================[m
+[32m+[m[32m# BANCO DE DADOS TEMPORÁRIO[m
+[32m+[m[32m# Por enquanto usamos listas de dicionários para guardar os dados.[m
+[32m+[m[32m# Cada dicionário representa uma linha de uma tabela do banco.[m
+[32m+[m[32m# Quando integrar com PostgreSQL, estas listas serão removidas[m
+[32m+[m[32m# e substituídas por conexão com o banco.[m
+[32m+[m[32m# =============================================================[m
+ [m
+[31m-# ============= FUNÇÕES DE LIMITE DE TAMANHO =============[m
+[32m+[m[32mbd_clientes = []   # futura tabela: pessoa[m
+[32m+[m[32mbd_apolices = []   # futura tabela: apolice[m
+[32m+[m[32mbd_vendas   = []   # futura tabela: cotacoes[m
+ [m
+[31m-def limita_cpf(tamanho_texto):             # faz o CPF não ultrapassar 11 números[m
+[31m-    return len(tamanho_texto) <= 11[m
+ [m
+[31m-def limita_apolice(texto_atual):           # apólice não ultrapassa 15 caracteres[m
+[31m-    return len(texto_atual) <= 15[m
+[32m+[m[32m# =============================================================[m
+[32m+[m[32m# FUNÇÕES DE VALIDAÇÃO DE TAMANHO DOS CAMPOS[m
+[32m+[m[32m# Tkinter exige funções assim para limitar o que o usuário digita.[m
+[32m+[m[32m# =============================================================[m
+ [m
+[31m-def limita_venda(texto_atual):             # ID da venda não ultrapassa 10 caracteres[m
+[31m-    return len(texto_atual) <= 10[m
+[32m+[m[32mdef limita_cpf(texto):[m
+[32m+[m[32m    # CPF tem no máximo 11 dígitos[m
+[32m+[m[32m    return len(texto) <= 11[m
+ [m
+[31m-def limita_telefone(texto_atual):          # telefone não ultrapassa 11 caracteres (DDD + número)[m
+[31m-    return len(texto_atual) <= 11[m
+[32m+[m[32mdef limita_apolice(texto):[m
+[32m+[m[32m    # ID da apólice tem no máximo 15 caracteres[m
+[32m+[m[32m    return len(texto) <= 15[m
+ [m
+[32m+[m[32mdef limita_venda(texto):[m
+[32m+[m[32m    # ID da venda tem no máximo 10 caracteres[m
+[32m+[m[32m    return len(texto) <= 10[m
+ [m
+[31m-# Registra as funções para que possam ser usadas como validadores[m
+[32m+[m[32mdef limita_telefone(texto):[m
+[32m+[m[32m    # Telefone: DDD (2) + número (9) = 11 dígitos[m
+[32m+[m[32m    return len(texto) <= 11[m
+[32m+[m
+[32m+[m
+[32m+[m[32m# Registra os validadores para o Tkinter conseguir usar[m
+ validador_cpf      = janela.register(limita_cpf)[m
+ validador_apolice  = janela.register(limita_apolice)[m
+ validador_venda    = janela.register(limita_venda)[m
+ validador_telefone = janela.register(limita_telefone)[m
+ [m
+ [m
+[31m-# ============= JANELA DE RESPOSTA (POPUP DE SUCESSO) =============[m
+[31m-[m
+[31m-def mostrar_msg_sucesso(mensagem):         # exibe janela de aviso após operações do CRUD[m
+[31m-    popup = ctk.CTkToplevel(janela)        # cria uma nova janela pop-up[m
+[31m-    popup.title("Aviso do Sistema")        # nome da janela[m
+[31m-    popup.geometry("400x220")             # tamanho da janela[m
+[31m-    popup.grab_set()                       # impede interação com a janela principal enquanto o pop-up estiver aberto[m
+[32m+[m[32m# =============================================================[m
+[32m+[m[32m# FUNÇÕES CRUD - CLIENTES[m
+[32m+[m[32m# Cada função faz UMA coisa só: adicionar, buscar, atualizar[m
+[32m+[m[32m# ou remover. Quando integrar com PostgreSQL, você vai[m
+[32m+[m[32m# substituir o conteúdo DESSAS funções por queries SQL.[m
+[32m+[m[32m# =============================================================[m
+[32m+[m
+[32m+[m[32mdef crud_adicionar_cliente(dados):[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Adiciona um novo cliente ao banco de dados.[m
+[32m+[m
+[32m+[m[32m    # TODO POSTGRESQL: substituir o corpo desta função por:[m
+[32m+[m[32m    # cursor.execute([m
+[32m+[m[32m    #     "INSERT INTO pessoa (cpf_cnpj, nome_completo, email, sexo,[m
+[32m+[m[32m    #                          telefone, data_nascimento, status)[m
+[32m+[m[32m    #      VALUES (%s, %s, %s, %s, %s, %s, %s)",[m
+[32m+[m[32m    #     (dados["cpf_cnpj"], dados["nome_completo"], dados["email"],[m
+[32m+[m[32m    #      dados["sexo"], dados["telefone"], dados["data_nascimento"], dados["status"])[m
+[32m+[m[32m    # )[m
+[32m+[m[32m    # conn.commit()[m
+[32m+[m[32m    """[m
+[32m+[m[32m    # Verifica se já existe um cliente com esse CPF antes de adicionar[m
+[32m+[m[32m    for cliente in bd_clientes:[m
+[32m+[m[32m        if cliente["cpf_cnpj"] == dados["cpf_cnpj"]:[m
+[32m+[m[32m            return False, "CPF/CNPJ já cadastrado no sistema!"[m
+[32m+[m
+[32m+[m[32m    bd_clientes.append(dados)[m
+[32m+[m[32m    return True, "Cliente adicionado com sucesso!"[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef crud_buscar_cliente(cpf="", nome="", telefone=""):[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Busca um cliente por CPF, nome ou telefone.[m
+[32m+[m[32m    Retorna o dicionário do cliente ou None se não encontrar.[m
+[32m+[m
+[32m+[m[32m    # TODO POSTGRESQL: substituir por:[m
+[32m+[m[32m    # cursor.execute([m
+[32m+[m[32m    #     "SELECT * FROM pessoa WHERE cpf_cnpj = %s[m
+[32m+[m[32m    #      OR LOWER(nome_completo) = LOWER(%s) OR telefone = %s",[m
+[32m+[m[32m    #     (cpf, nome, telefone)[m
+[32m+[m[32m    # )[m
+[32m+[m[32m    # return cursor.fetchone()[m
+[32m+[m[32m    """[m
+[32m+[m[32m    for cliente in bd_clientes:[m
+[32m+[m[32m        if (cpf      and cliente["cpf_cnpj"] == cpf) or \[m
+[32m+[m[32m           (nome     and cliente["nome_completo"].lower() == nome.lower()) or \[m
+[32m+[m[32m           (telefone and cliente["telefone"] == telefone):[m
+[32m+[m[32m            return cliente[m
+[32m+[m[32m    return None[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef crud_atualizar_cliente(cpf, novos_dados):[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Atualiza os dados de um cliente existente buscando pelo CPF.[m
+[32m+[m[32m    Retorna True se atualizou, False se não encontrou.[m
+[32m+[m
+[32m+[m[32m    # TO
