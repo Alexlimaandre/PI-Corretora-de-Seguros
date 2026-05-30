@@ -4,15 +4,13 @@
 
 from conn import conexao    # importa a função que abre a conexão
 
-# Abre a conexão UMA VEZ só quando o arquivo é carregado.
-# O cursor fica aberto para todas as funções usarem.
-conn   = conexao()
-cursor = conn.cursor()
+conn   = conexao()                 # abre a conexão com o banco 
+cursor = conn.cursor()             # cria um cursor para executar comandos SQL
 
 
-# ========================================= #
+
 #                  CREATE                   #
-# ========================================= #
+
 
 def create_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
     # Insere um novo cliente na tabela pessoa
@@ -70,9 +68,8 @@ def create_cotacao(id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotac
         return False
 
 
-# ========================================= #
 #                   READ                    #
-# ========================================= #
+
 
 def read_todas_pessoas():
     # Retorna uma lista de dicionários com todos os clientes do banco
@@ -288,9 +285,8 @@ def read_cotacao_por_pessoa(id_pessoa):
         return None
 
 
-# ========================================= #
 #                  UPDATE                   #
-# ========================================= #
+
 
 def update_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
     # Atualiza os dados do cliente pelo CPF
@@ -357,10 +353,9 @@ def update_cotacao(id_cotacao, id_pessoa, id_seguradora, id_plano, valor, data):
         print("Erro ao atualizar cotação:", e)
         return False
 
-
-# ========================================= #
+ #
 #                  DELETE                   #
-# ========================================= #
+
 
 def delete_pessoa(cpf):
     # Remove um cliente pelo CPF
@@ -424,4 +419,16 @@ def delete_cotacao(id_cotacao):
 
 # ============= TESTE  =============
 
-# read_todas_pessoas()  
+# read_todas_pessoas()
+
+
+# ===== TESTE — apague depois =====
+#cursor.execute("SELECT id_pessoa, nome_completo FROM pessoa")
+#print("PESSOAS:", cursor.fetchall())
+
+#cursor.execute("SELECT id_seguradora, nome_fantasia FROM seguradora")
+#print("SEGURADORAS:", cursor.fetchall())
+
+#cursor.execute("SELECT id_plano, nome_plano FROM plano")
+#print("PLANOS:", cursor.fetchall())
+  

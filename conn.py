@@ -26,5 +26,3 @@ def fechar_conexao(conn):
     if conn:
         conn.close()
 
-conexao()
-fechar_conexao(conexao())
