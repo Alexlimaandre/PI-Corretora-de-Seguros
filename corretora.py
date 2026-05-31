@@ -620,9 +620,11 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl3, placeholder3, validador3 = "Telefone Suporte:", "Telefone de suporte", None
 
     elif nome_secao == "Planos":
-        if acao in ["Pesquisar", "Remover"]:
+        if acao == "Pesquisar":
             lbl1, placeholder1, validador1 = "ID Plano:", "Filtrar pelo ID do plano", None
             lbl2, placeholder2, validador2 = "Nome Plano:", "Filtrar pelo nome do plano", None
+        elif acao == "Remover":
+            lbl1, placeholder1, validador1 = "ID Plano:", "Digite o ID do plano para remover", None
         elif acao == "Atualizar":
             lbl1, placeholder1, validador1 = "ID Plano (obrigatório):", "ID para localizar o plano",  None
             lbl2, placeholder2, validador2 = "ID Seguradora:",          "ID da seguradora vinculada", None
