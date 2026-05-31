@@ -84,12 +84,12 @@ def create_seguradora(nome, cnpj, telefone):
         print("Erro ao criar seguradora:", e)
         return False
     
-def create_plano(id_seguradora, nome_plano, valor_plano):
+def create_plano(id_seguradora, tipo_cobertura, nome_plano):
     try:
         cursor.execute(
-            """INSERT INTO plano (id_seguradora, nome_plano, valor_plano)
+            """INSERT INTO plano (id_seguradora, tipo_cobertura ,nome_plano)
                VALUES (%s, %s, %s)""",
-            (id_seguradora, nome_plano, valor_plano)
+            (id_seguradora, tipo_cobertura, nome_plano)
         )
         conn.commit()
         print("Plano criado com sucesso!")
@@ -470,6 +470,37 @@ def read_plano_por_id(id_plano):
         conn.rollback()
         print("Erro ao buscar plano:", e)
         return None
+    
+def read_plano_por_nome(nome_plano):
+    try:
+        cursor.execute("""
+            SELECT
+                p.id_plano || ' - ' || p.nome_plano AS plano_id,
+                s.id_seguradora || ' - ' || s.nome_fantasia AS seguradora_id,
+                p.tipo_cobertura AS cobertura
+            FROM Plano p
+            JOIN Seguradora s
+                USING(id_seguradora)
+            WHERE p.nome_plano ILIKE %s
+            """, 
+            (f"%{nome_plano}%",)
+        )
+        resultado = cursor.fetchone()
+        if resultado is None:
+            return None
+
+        plano = {
+            "plano_id": resultado[0],
+            "seguradora_id": resultado[1],
+            "cobertura": resultado[2],
+        }
+
+        return plano
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar plano:", e)
+        return None
 
 #                  UPDATE                   #
 
@@ -559,14 +590,14 @@ def update_seguradora(id_seguradora, nome, cnpj, telefone):
         print("Erro ao atualizar seguradora:", e)
         return False
     
-def update_plano(id_plano, id_seguradora, nome_plano, valor_plano):
+def update_plano(id_plano, id_seguradora, nome_plano, tipo_cobertura):
     # Atualiza os dados de um plano pelo ID
     try:
         cursor.execute(
             """UPDATE plano
-               SET id_seguradora=%s, nome_plano=%s, valor_plano=%s
+               SET id_seguradora=%s, nome_plano=%s, tipo_cobertura=%s
                WHERE id_plano = %s""",
-            (id_seguradora, nome_plano, valor_plano, id_plano)
+            (id_seguradora, nome_plano, tipo_cobertura, id_plano)
         )
         conn.commit()
 

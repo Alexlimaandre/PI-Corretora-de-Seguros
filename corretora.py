@@ -361,7 +361,12 @@ def confirma_crud():
                 return
 
         elif chamar_acao == "Pesquisar":
-            planos = crud.read_plano_por_id(v1)
+            planos = None
+            
+            if v1:
+                planos = crud.read_plano_por_id(v1)
+            elif v2:
+                planos = crud.read_plano_por_nome(v2)
 
             if planos:
                 mensagem_alerta = (
@@ -617,6 +622,7 @@ def gerar_campos_formulario(acao, nome_secao):
     elif nome_secao == "Planos":
         if acao in ["Pesquisar", "Remover"]:
             lbl1, placeholder1, validador1 = "ID Plano:", "Filtrar pelo ID do plano", None
+            lbl2, placeholder2, validador2 = "Nome Plano:", "Filtrar pelo nome do plano", None
         elif acao == "Atualizar":
             lbl1, placeholder1, validador1 = "ID Plano (obrigatório):", "ID para localizar o plano",  None
             lbl2, placeholder2, validador2 = "ID Seguradora:",          "ID da seguradora vinculada", None
