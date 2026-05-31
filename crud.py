@@ -66,6 +66,23 @@ def create_cotacao(id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotac
         conn.rollback()
         print("Erro ao criar cotação:", e)
         return False
+    
+def create_seguradora(nome, cnpj, telefone):
+    # Insere uma nova seguradora no banco
+    try:
+        cursor.execute(
+            """INSERT INTO seguradora (nome_fantasia, cnpj, telefone_suporte)
+               VALUES (%s, %s, %s)""",
+            (nome, cnpj, telefone)
+        )
+        conn.commit()
+        print("Seguradora criada com sucesso!")
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao criar seguradora:", e)
+        return False
 
 
 #                   READ                    #
@@ -311,6 +328,92 @@ def read_cotacao_por_pessoa(id_pessoa):
         print("Erro ao buscar cotação por pessoa:", e)
         return None
 
+# Seguradoras
+def read_seguradoras():
+    try:
+        cursor.execute("""
+                        SELECT 
+                            id_seguradora AS id,
+                            nome_fantasia AS nome,
+                            cnpj,
+                            telefone_suporte AS telefone
+                        FROM Seguradora
+                    """)
+        resultados = cursor.fetchall()
+        seguradoras = []
+        for resultado in resultados:
+            seguradora = {
+                "id": resultado[0],
+                "nome": resultado[1],
+                "cnpj": resultado[2],
+                "telefone": resultado[3]
+            }
+            seguradoras.append(seguradora)
+        return seguradoras
+
+    except Exception as e:
+        print("Erro ao buscar seguradoras:", e)
+        return None
+    
+def read_seguradoras_por_id(id_seguradora):
+    try:
+        cursor.execute("""
+                        SELECT 
+                            id_seguradora AS id,
+                            nome_fantasia AS nome,
+                            cnpj,
+                            telefone_suporte AS telefone
+                        FROM Seguradora
+                        WHERE id_seguradora = %s""",
+                        (id_seguradora,)
+        )
+        
+        resultados = cursor.fetchall()
+        seguradoras = []
+        for resultado in resultados:
+            seguradora = {
+                "id": resultado[0],
+                "nome": resultado[1],
+                "cnpj": resultado[2],
+                "telefone": resultado[3]
+            }
+            seguradoras.append(seguradora)
+        return seguradoras
+
+    except Exception as e:
+        print("Erro ao buscar seguradoras:", e)
+        return None
+
+def read_seguradoras_por_nome(nome_seguradora):
+    # Retorna uma lista de dicionários com todas as seguradoras do banco
+    try:
+        cursor.execute("""
+                        SELECT 
+                            id_seguradora AS id,
+                            nome_fantasia AS nome,
+                            cnpj,
+                            telefone_suporte AS telefone
+                        FROM Seguradora
+                        WHERE nome_fantasia ILIKE %s""",
+                        (f"%{nome_seguradora}%",)
+        )
+        resultados = cursor.fetchall()
+        seguradoras = []
+        for resultado in resultados:
+            seguradora = {
+                "id": resultado[0],
+                "nome": resultado[1],
+                "cnpj": resultado[2],
+                "telefone": resultado[3]
+            }
+            seguradoras.append(seguradora)
+        return seguradoras
+
+    except Exception as e:
+        print("Erro ao buscar seguradoras:", e)
+        return None
+
+
 
 #                  UPDATE                   #
 
@@ -380,7 +483,27 @@ def update_cotacao(id_cotacao, id_pessoa, id_seguradora, id_plano, valor, data):
         print("Erro ao atualizar cotação:", e)
         return False
 
- #
+def update_seguradora(id_seguradora, nome, cnpj, telefone):
+    # Atualiza os dados de uma seguradora pelo ID
+    try:
+        cursor.execute(
+            """UPDATE seguradora
+               SET nome_fantasia=%s, cnpj=%s, telefone_suporte=%s
+               WHERE id_seguradora = %s""",
+            (nome, cnpj, telefone, id_seguradora)
+        )
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return False
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao atualizar seguradora:", e)
+        return False
+
+
 #                  DELETE                   #
 
 
@@ -440,6 +563,27 @@ def delete_cotacao(id_cotacao):
         conn.rollback()
         print("Erro ao deletar cotação:", e)
         return False
+
+
+def delete_seguradora(id_seguradora):
+    # Remove uma seguradora pelo ID
+    try:
+        cursor.execute(
+            "DELETE FROM seguradora WHERE id_seguradora = %s",
+            (id_seguradora,)
+        )
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return False
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao deletar seguradora:", e)
+        return False
+
+
     
 
 
@@ -459,3 +603,4 @@ def delete_cotacao(id_cotacao):
 #cursor.execute("SELECT id_plano, nome_plano FROM plano")
 #print("PLANOS:", cursor.fetchall())
   
+print(read_seguradoras())
