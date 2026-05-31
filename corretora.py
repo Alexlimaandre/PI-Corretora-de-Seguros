@@ -361,15 +361,14 @@ def confirma_crud():
                 return
 
         elif chamar_acao == "Pesquisar":
-            plano = crud.read_plano_por_id(v1)
+            planos = crud.read_plano_por_id(v1)
 
-            if plano:
+            if planos:
                 mensagem_alerta = (
                     f"Plano encontrado!\n\n"
-                    f"ID Plano: {plano['id_plano']}\n"
-                    f"ID Seguradora: {plano['id_seguradora']}\n"
-                    f"Tipo Cobertura: {plano['tipo_cobertura']}\n"
-                    f"Nome Plano: {plano['nome_plano']}"
+                    f"ID - Plano: {planos['plano_id']}\n"
+                    f"ID - Seguradora: {planos['seguradora_id']}\n"
+                    f"Tipo Cobertura: {planos['cobertura']}\n"
                 )
             else:
                 label_erro_crud.configure(text="Nenhum plano localizado!", text_color="#e74c3c")

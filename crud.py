@@ -83,6 +83,22 @@ def create_seguradora(nome, cnpj, telefone):
         conn.rollback()
         print("Erro ao criar seguradora:", e)
         return False
+    
+def create_plano(id_seguradora, nome_plano, valor_plano):
+    try:
+        cursor.execute(
+            """INSERT INTO plano (id_seguradora, nome_plano, valor_plano)
+               VALUES (%s, %s, %s)""",
+            (id_seguradora, nome_plano, valor_plano)
+        )
+        conn.commit()
+        print("Plano criado com sucesso!")
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao criar plano:", e)
+        return False
 
 
 #                   READ                    #
@@ -97,6 +113,7 @@ def read_todas_pessoas():
             print(i, end="\n\n")  # imprime cada cliente com uma linha em branco entre eles
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao buscar todas as pessoas:", e)
         return []  # retorna lista vazia se der erro
 
@@ -128,6 +145,7 @@ def read_pessoa_por_cpf(cpf):
         return cliente
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao buscar pessoa por CPF:", e)
         return None
 
@@ -158,6 +176,7 @@ def read_pessoa_por_nome(nome):
         return cliente
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao buscar pessoa por nome:", e)
         return None
 
@@ -188,6 +207,7 @@ def read_pessoa_por_telefone(telefone):
         return cliente
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao buscar pessoa por telefone:", e)
         return None
 
@@ -214,6 +234,7 @@ def read_apolice(id_apolice):
         return apolice
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao buscar apólice:", e)
         return None
 
@@ -240,6 +261,7 @@ def read_apolice_por_cotacao(id_cotacao):
         return apolice
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao buscar apólice por cotação:", e)
         return None
 
@@ -283,6 +305,7 @@ def read_cotacao(id_cotacao):
         return venda
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao buscar cotação:", e)
         return None
 
@@ -325,6 +348,7 @@ def read_cotacao_por_pessoa(id_pessoa):
         return venda
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao buscar cotação por pessoa:", e)
         return None
 
@@ -352,6 +376,7 @@ def read_seguradoras():
         return seguradoras
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao buscar seguradoras:", e)
         return None
     
@@ -381,6 +406,7 @@ def read_seguradora_por_id(id_seguradora):
         return seguradora
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao buscar seguradoras:", e)
         return None
 
@@ -410,10 +436,40 @@ def read_seguradora_por_cnpj(cnpj):
         return seguradoras
 
     except Exception as e:
+        conn.rollback()
         print("Erro ao buscar seguradoras:", e)
         return None
+ 
+def read_plano_por_id(id_plano):
+    try:
+        cursor.execute("""
+            SELECT
+                p.id_plano || ' - ' || p.nome_plano AS plano_id,
+                s.id_seguradora || ' - ' || s.nome_fantasia AS seguradora_id,
+                p.tipo_cobertura AS cobertura
+            FROM Plano p
+            JOIN Seguradora s
+                USING(id_seguradora)
+            WHERE p.id_plano = %s
+            """, 
+            (id_plano,)
+        )
+        resultado = cursor.fetchone()
+        if resultado is None:
+            return None
 
+        plano = {
+            "plano_id": resultado[0],
+            "seguradora_id": resultado[1],
+            "cobertura": resultado[2],
+        }
 
+        return plano
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar plano:", e)
+        return None
 
 #                  UPDATE                   #
 
@@ -502,6 +558,26 @@ def update_seguradora(id_seguradora, nome, cnpj, telefone):
         conn.rollback()
         print("Erro ao atualizar seguradora:", e)
         return False
+    
+def update_plano(id_plano, id_seguradora, nome_plano, valor_plano):
+    # Atualiza os dados de um plano pelo ID
+    try:
+        cursor.execute(
+            """UPDATE plano
+               SET id_seguradora=%s, nome_plano=%s, valor_plano=%s
+               WHERE id_plano = %s""",
+            (id_seguradora, nome_plano, valor_plano, id_plano)
+        )
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return False
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao atualizar plano:", e)
+        return False
 
 
 #                  DELETE                   #
@@ -581,6 +657,24 @@ def delete_seguradora(id_seguradora):
     except Exception as e:
         conn.rollback()
         print("Erro ao deletar seguradora:", e)
+        return False
+    
+def delete_plano(id_plano):
+    # Remove um plano pelo ID
+    try:
+        cursor.execute(
+            "DELETE FROM plano WHERE id_plano = %s",
+            (id_plano,)
+        )
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return False
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao deletar plano:", e)
         return False
 
 
