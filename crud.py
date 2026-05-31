@@ -355,7 +355,7 @@ def read_seguradoras():
         print("Erro ao buscar seguradoras:", e)
         return None
     
-def read_seguradoras_por_id(id_seguradora):
+def read_seguradora_por_id(id_seguradora):
     try:
         cursor.execute("""
                         SELECT 
@@ -378,13 +378,13 @@ def read_seguradoras_por_id(id_seguradora):
                 "telefone": resultado[3]
             }
             seguradoras.append(seguradora)
-        return seguradoras
+        return seguradora
 
     except Exception as e:
         print("Erro ao buscar seguradoras:", e)
         return None
 
-def read_seguradoras_por_nome(nome_seguradora):
+def read_seguradora_por_cnpj(cnpj):
     # Retorna uma lista de dicionários com todas as seguradoras do banco
     try:
         cursor.execute("""
@@ -394,8 +394,8 @@ def read_seguradoras_por_nome(nome_seguradora):
                             cnpj,
                             telefone_suporte AS telefone
                         FROM Seguradora
-                        WHERE nome_fantasia ILIKE %s""",
-                        (f"%{nome_seguradora}%",)
+                        WHERE cnpj = %s""",
+                        (cnpj,)
         )
         resultados = cursor.fetchall()
         seguradoras = []
@@ -603,4 +603,4 @@ def delete_seguradora(id_seguradora):
 #cursor.execute("SELECT id_plano, nome_plano FROM plano")
 #print("PLANOS:", cursor.fetchall())
   
-print(read_seguradoras())
+# print(read_seguradoras())

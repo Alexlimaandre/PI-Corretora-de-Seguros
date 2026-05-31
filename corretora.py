@@ -313,19 +313,19 @@ def confirma_crud():
                 return
 
         elif chamar_acao == "Pesquisar":
-            seguradora = None
+            seguradoras = None
             if v1:
-                seguradora = crud.read_seguradora_por_id(v1)
+                seguradoras = crud.read_seguradora_por_id(v1)
             elif v2:
-                seguradora = crud.read_seguradora_por_cnpj(v2)
+                seguradoras = crud.read_seguradora_por_cnpj(v2)
 
-            if seguradora:
+            if seguradoras:
                 mensagem_alerta = (
                     f"Seguradora encontrada!\n\n"
-                    f"ID: {seguradora['id_seguradora']}\n"
-                    f"Nome: {seguradora['nome_fantasia']}\n"
-                    f"CNPJ: {seguradora['cnpj']}\n"
-                    f"Telefone Suporte: {seguradora['telefone_suporte']}"
+                    f"ID: {seguradoras['id']}\n"
+                    f"Nome: {seguradoras['nome']}\n"
+                    f"CNPJ: {seguradoras['cnpj']}\n"
+                    f"Telefone Suporte: {seguradoras['telefone']}"
                 )
             else:
                 label_erro_crud.configure(text="Nenhuma seguradora localizada!", text_color="#e74c3c")
