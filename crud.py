@@ -227,13 +227,27 @@ def read_apolice_por_cotacao(id_cotacao):
         return None
 
 
+
 def read_cotacao(id_cotacao):
     # Busca cotação pelo ID — retorna dicionário ou None
     try:
         cursor.execute(
-            """SELECT id_cotacao, id_pessoa, id_seguradora,
-                      id_plano, valor_cotacao, data_cotacao
-               FROM cotacoes WHERE id_cotacao = %s""",
+            """
+            SELECT
+                c.id_cotacao,
+                p.nome_completo AS Cliente,
+                s.nome_fantasia AS Seguradora,
+                pl.nome_plano AS Plano,
+                c.valor_cotacao AS "Valor Cotação",
+                data_cotacao AS "Data da Cotação"
+            FROM Seguradora s
+            JOIN Plano pl
+                USING(id_seguradora)
+            JOIN Cotacoes c
+                USING(id_plano)
+            JOIN Pessoa p
+                USING(id_pessoa)
+            WHERE c.id_cotacao = %s""",
             (id_cotacao,)
         )
         resultado = cursor.fetchone()
@@ -242,12 +256,12 @@ def read_cotacao(id_cotacao):
             return None
 
         venda = {
-            "id_cotacao":    resultado[0],
-            "id_pessoa":     resultado[1],
-            "id_seguradora": resultado[2],
-            "id_plano":      resultado[3],
-            "valor_cotacao": str(resultado[4]),
-            "data_cotacao":  str(resultado[5])
+            "c.id_cotacao":    resultado[0],
+            "p.nome_pessoa":     str(resultado[1]),
+            "s.nome_fantasia": str(resultado[2]),
+            "pl.nome_plano":      str(resultado[3]),
+            "c.valor_cotacao": str(resultado[4]),
+            "c.data_cotacao":  str(resultado[5])
         }
         return venda
 
@@ -260,9 +274,22 @@ def read_cotacao_por_pessoa(id_pessoa):
     # Busca cotação pelo ID da pessoa vinculada
     try:
         cursor.execute(
-            """SELECT id_cotacao, id_pessoa, id_seguradora,
-                      id_plano, valor_cotacao, data_cotacao
-               FROM cotacoes WHERE id_pessoa = %s""",
+            """
+            SELECT
+                c.id_cotacao,
+                p.nome_completo AS Cliente,
+                s.nome_fantasia AS Seguradora,
+                pl.nome_plano AS Plano,
+                c.valor_cotacao AS "Valor Cotação",
+                c.data_cotacao AS "Data da Cotação"
+            FROM Seguradora s
+            JOIN Plano pl
+                USING(id_seguradora)
+            JOIN Cotacoes c
+                USING(id_plano)
+            JOIN Pessoa p
+                USING(id_pessoa)
+            WHERE p.id_pessoa = %s""",
             (id_pessoa,)
         )
         resultado = cursor.fetchone()
@@ -271,12 +298,12 @@ def read_cotacao_por_pessoa(id_pessoa):
             return None
 
         venda = {
-            "id_cotacao":    resultado[0],
-            "id_pessoa":     resultado[1],
-            "id_seguradora": resultado[2],
-            "id_plano":      resultado[3],
-            "valor_cotacao": str(resultado[4]),
-            "data_cotacao":  str(resultado[5])
+            "c.id_cotacao":    resultado[0],
+            "p.nome_pessoa":     str(resultado[1]),
+            "s.nome_fantasia": str(resultado[2]),
+            "pl.nome_plano":      str(resultado[3]),
+            "c.valor_cotacao": str(resultado[4]),
+            "c.data_cotacao":  str(resultado[5])
         }
         return venda
 

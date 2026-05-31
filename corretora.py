@@ -512,12 +512,12 @@ def confirma_crud():
             if venda:
                 mensagem_alerta = (
                     f"Venda encontrada!\n\n"
-                    f"ID Cotação: {venda['id_cotacao']}\n"
-                    f"ID Pessoa: {venda['id_pessoa']}\n"
-                    f"ID Seguradora: {venda['id_seguradora']}\n"
-                    f"ID Plano: {venda['id_plano']}\n"
-                    f"Valor: R$ {venda['valor_cotacao']}\n"
-                    f"Data: {venda['data_cotacao']}"
+                    f"ID Cotação: {venda['c.id_cotacao']}\n"
+                    f"Nome Pessoa: {venda['p.nome_pessoa']}\n"
+                    f"Nome Seguradora: {venda['s.nome_fantasia']}\n"
+                    f"Nome Plano: {venda['pl.nome_plano']}\n"
+                    f"Valor: R$ {venda['c.valor_cotacao']}\n"
+                    f"Data: {venda['c.data_cotacao']}"
                 )
             else:
                 label_erro_crud.configure(text="Nenhuma venda localizada!", text_color="#e74c3c")
