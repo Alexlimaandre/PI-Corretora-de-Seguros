@@ -591,10 +591,12 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl5, placeholder5, validador5 = "Telefone (Filtro):",      "Deixe vazio para filtrar por outro", validador_telefone
 
         elif acao == "Remover":
-            lbl1, placeholder1, validador1 = "CPF/CNPJ:",      "Digite o CPF para buscar",   validador_cpf
-            lbl2, placeholder2, validador2 = "Nome Completo:", "Preenchido automaticamente", None
-            lbl3, placeholder3, validador3 = "Email:",         "Preenchido automaticamente", None
-            lbl5, placeholder5, validador5 = "Telefone:",      "Preenchido automaticamente", validador_telefone
+            # Seguir a mesma linha dos outros....apagar somente com o ID
+            lbl2, placeholder2, validador2 = "ID do Cliente:", "Digite o ID do cliente para remover", None
+            # lbl1, placeholder1, validador1 = "CPF/CNPJ:",      "Digite o CPF para buscar",   validador_cpf
+            # lbl2, placeholder2, validador2 = "Nome Completo:", "Preenchido automaticamente", None
+            # lbl3, placeholder3, validador3 = "Email:",         "Preenchido automaticamente", None
+            # lbl5, placeholder5, validador5 = "Telefone:",      "Preenchido automaticamente", validador_telefone
 
         else:                                                   # Acrescentar e Atualizar
             lbl1, placeholder1, validador1 = "CPF/CNPJ (Max 11):",          "Digite apenas números",  validador_cpf
@@ -606,9 +608,11 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl7, placeholder7, validador7 = "Status (Ativo/Inativo):",     "Status cadastral",        None
 
     elif nome_secao == "Seguradoras":
-        if acao in ["Pesquisar", "Remover"]:
+        if acao == "Pesquisar":
             lbl1, placeholder1, validador1 = "ID Seguradora:", "Filtrar pelo ID da seguradora", None
             lbl2, placeholder2, validador2 = "CNPJ:",          "Filtrar pelo CNPJ",             None
+        elif acao == "Remover":
+            lbl2, placeholder2, validador2 = "ID da Seguradora:", "Digite o ID da seguradora para remover", None
         elif acao == "Atualizar":
             lbl1, placeholder1, validador1 = "ID Seguradora (obrigatório):", "ID para localizar a seguradora", None
             lbl2, placeholder2, validador2 = "Nome Fantasia:",               "Nome da seguradora",             None
@@ -636,8 +640,10 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl3, placeholder3, validador3 = "Nome Plano:",     "Nome do plano",              None
 
     elif nome_secao == "Bens":
-        if acao in ["Pesquisar", "Remover"]:
+        if acao == "Pesquisar":
             lbl1, placeholder1, validador1 = "ID Bem:", "Filtrar pelo ID do bem", None
+        elif acao == "Remover":
+            lbl2, placeholder2, validador2 = "ID do Bem:", "Digite o ID do bem para remover", None
         elif acao == "Atualizar":
             lbl1, placeholder1, validador1 = "ID Bem (obrigatório):", "ID para localizar o bem", None
             lbl2, placeholder2, validador2 = "Tipo Bem:",             "Ex: Imóvel, Veículo",     None
@@ -650,9 +656,11 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl4, placeholder4, validador4 = "Valor Estimado R$:", "Ex: 50000.00",        None
 
     elif nome_secao == "Apólices":
-        if acao in ["Pesquisar", "Remover"]:
+        if acao == "Pesquisar":
             lbl1, placeholder1, validador1 = "ID Apólice (Filtro):", "Filtrar por ID da Apólice", validador_apolice
             lbl2, placeholder2, validador2 = "ID Cotação (Filtro):", "Filtrar por ID da Cotação", validador_venda
+        elif acao == "Remover":
+            lbl2, placeholder2, validador2 = "ID da Apólice:", "Digite o ID da apólice para remover", None
         else:
             lbl1, placeholder1, validador1 = "ID Apólice (id_apolice):",   "Código identificador",          validador_apolice
             lbl2, placeholder2, validador2 = "ID Cotação (id_cotacao):",   "Chave estrangeira de Cotações", validador_venda
@@ -660,9 +668,11 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl4, placeholder4, validador4 = "Data Fim (DD/MM/AAAA):",     "Ex: 01/01/2025",               None
 
     elif nome_secao == "Vendas":
-        if acao in ["Pesquisar", "Remover"]:
+        if acao == "Pesquisar":
             lbl1, placeholder1, validador1 = "ID Cotação:", "Filtrar por Cotação",       validador_venda
             lbl2, placeholder2, validador2 = "ID Pessoa:",  "Filtrar por ID do cliente", None
+        elif acao == "Remover":
+            lbl2, placeholder2, validador2 = "ID da Venda:", "Digite o ID da venda para remover", None
         else:
             lbl1, placeholder1, validador1 = "ID Cotação (id_cotacao):", "Código identificador",            validador_venda
             lbl2, placeholder2, validador2 = "ID Pessoa (id_pessoa):",   "Chave estrangeira de Pessoa",     None
@@ -766,7 +776,7 @@ def gerar_campos_formulario(acao, nome_secao):
         campo1_ativo.bind("<FocusOut>", buscar_cliente_por_cpf)
         campo1_ativo.bind("<Return>",   buscar_cliente_por_cpf)
 
-    # ---- Botão de confirmação ----
+    # ---- Botão de confirmação ---- #
     ctk.CTkButton(
         frame_zona_inputs,
         text=f"Confirmar {acao}",

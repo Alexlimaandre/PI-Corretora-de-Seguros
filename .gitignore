@@ -9,3 +9,4 @@ venv/
 .env/
 
 requirements.txt
+tash

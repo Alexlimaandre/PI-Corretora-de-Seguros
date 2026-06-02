@@ -711,21 +711,5 @@ def delete_plano(id_plano):
 
     
 
+## Funções para busca baseada no Indicadores do BI ##
 
-
-# ============= TESTE  =============
-
-# read_todas_pessoas()
-
-
-# ===== TESTE — apague depois =====
-#cursor.execute("SELECT id_pessoa, nome_completo FROM pessoa")
-#print("PESSOAS:", cursor.fetchall())
-
-#cursor.execute("SELECT id_seguradora, nome_fantasia FROM seguradora")
-#print("SEGURADORAS:", cursor.fetchall())
-
-#cursor.execute("SELECT id_plano, nome_plano FROM plano")
-#print("PLANOS:", cursor.fetchall())
-  
-# print(read_seguradoras())
