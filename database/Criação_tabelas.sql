@@ -81,3 +81,8 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_aprovar_cotacao
+AFTER UPDATE OF status_cotacao ON Cotacoes
+FOR EACH ROW
+EXECUTE FUNCTION fn_gerar_apolice_automatica();
