@@ -25,8 +25,8 @@ CREATE TABLE Bens (
 CREATE TABLE Seguradora (
                             id_seguradora SERIAL PRIMARY KEY,
                             nome_fantasia VARCHAR(100),
-                            cnpj VARCHAR(14) NOT NULL, -- Alterado para VARCHAR para preservar zeros à esquerda
-                            telefone_suporte VARCHAR(11) NOT NULL -- Alterado para VARCHAR pela mesma razão
+                            cnpj VARCHAR(14) NOT NULL,
+                            telefone_suporte VARCHAR(11) NOT NULL
 );
 
 CREATE TABLE Plano (
@@ -42,7 +42,7 @@ CREATE TABLE Cotacoes (
                           id_pessoa INT,
                           id_seguradora INT,
                           id_plano INT,
-                          valor_cotacao DECIMAL(10, 2) NOT NULL, -- DECIMAL é mais preciso que FLOAT para valores financeiros
+                          valor_cotacao DECIMAL(10, 2) NOT NULL, 
                           data_cotacao DATE NOT NULL,
                           FOREIGN KEY (id_pessoa) REFERENCES Pessoa(id_pessoa),
                           FOREIGN KEY (id_seguradora) REFERENCES Seguradora(id_seguradora),
@@ -57,3 +57,27 @@ CREATE TABLE Apolice (
                          FOREIGN KEY (id_cotacao) REFERENCES Cotacoes(id_cotacao)
 );
 
+ALTER TABLE Cotacao ADD COLUMN status_cotacao VARCHAR(20) DEFAULT 'Pendente';
+
+-----Trigger------
+CREATE OR REPLACE FUNCTION fn_gerar_apolice_automatica()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.status_cotacao = 'Aprovada' AND OLD.status_cotacao <> 'Aprovada' THEN
+        INSERT INTO Apolice (
+            id_cotacao,
+            numero_apolice_seguradora,
+            inicio,
+            fim,
+            status_apolice
+        ) VALUES (
+            NEW.id_cotacao, 
+            'PENDENTE-' || NEW.id_cotacao, 
+            CURRENT_DATE,                  
+            CURRENT_DATE + INTERVAL '1 year', 
+            'Ativa'                        
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
