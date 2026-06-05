@@ -506,16 +506,32 @@ def read_plano_por_nome(nome_plano):
 
 
 def update_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
-    # Atualiza os dados do cliente pelo CPF
+    # Atualiza os dados do cliente pelo CPF de forma parcial
     # cursor.rowcount indica quantas linhas foram afetadas
     # se for 0, o CPF não foi encontrado no banco
     try:
+        # Se o campo veio vazio da interface, buscamos o valor atual que já está no banco
+        # para não apagar o dado antigo.
+        cliente_atual = read_pessoa_por_cpf(cpf)
+        
+        if not cliente_atual:
+            return False    # Se o CPF não for localizado na busca, já para aqui
+
+        # Se o parâmetro passado for vazio, mantém o valor que já existia no banco
+        nome_final      = nome if nome != "" else cliente_atual["nome_completo"]
+        email_final     = email if email != "" else cliente_atual["email"]
+        sexo_final      = sexo if sexo != "" else cliente_atual["sexo"]
+        telefone_final  = telefone if telefone != "" else cliente_atual["telefone"]
+        data_nasc_final = data_nasc if data_nasc != "" else cliente_atual["data_nascimento"]
+        status_final    = status if status != "" else cliente_atual["status"]
+
+        # Executa o UPDATE com a tabela 'pessoa' (no singular) com os valores tratados
         cursor.execute(
             """UPDATE pessoa
                SET nome_completo=%s, email=%s, sexo=%s,
                    telefone=%s, data_nascimento=%s, status=%s
                WHERE cpf_cnpj = %s""",
-            (nome, email, sexo, telefone, data_nasc, status, str(cpf))
+            (nome_final, email_final, sexo_final, telefone_final, data_nasc_final, status_final, str(cpf))
         )
         conn.commit()
 

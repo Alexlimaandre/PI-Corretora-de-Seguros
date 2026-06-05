@@ -13,8 +13,7 @@ janela = ctk.CTk()                         # janela principal do sistema
 janela.title("Corretora de Seguros")       # título da janela
 janela.geometry("850x650")                 # tamanho da janela
 
-
-# ============= FUNÇÕES DE LIMITE DE TAMANHO =============
+# ========== FUNÇÕES DE LIMITE DE TAMANHO =============
 
 def limita_cpf(tamanho_cpf):               # faz o CPF não ultrapassar 11 números
     return len(tamanho_cpf) <= 11
@@ -42,24 +41,6 @@ validador_apolice  = janela.register(limita_apolice)
 validador_venda    = janela.register(limita_venda)
 validador_telefone = janela.register(limita_telefone)
 validador_sexo     = janela.register(limita_sexo)
-
-
-# ============= JANELA DE RESPOSTA (POPUP DE SUCESSO) =============
-
-def mostrar_msg_sucesso(mensagem):         # exibe janela de aviso após operações do CRUD
-    popup = ctk.CTkToplevel(janela)        # cria uma nova janela pop-up
-    popup.title("Aviso do Sistema")        # nome da janela
-    popup.geometry("400x220")              # tamanho da janela
-    popup.grab_set()                       # impede interação com a janela principal enquanto o pop-up estiver aberto
-
-    ctk.CTkLabel(
-        popup,
-        text=mensagem,
-        font=ctk.CTkFont(size=13, weight="bold"),
-        wraplength=350
-    ).pack(pady=(30, 20))
-
-    ctk.CTkButton(popup, text="OK", width=100, command=popup.destroy).pack()
 
 
 # ============= FUNÇÃO DE LOGIN =============
@@ -156,9 +137,11 @@ campo4_ativo  = None
 campo5_ativo  = None
 campo6_ativo  = None
 campo7_ativo  = None
-label_erro_crud = None # referência ao label de erro do CRUD atual
-painel_usado  = ""     # indica qual seção está aberta
-chamar_acao   = ""     # indica qual ação está ativa
+label_erro_crud  = None  # referência ao label de erro do CRUD atual
+label_mensagem   = None  # referência ao label de mensagem de sucesso/info inline de forma fixa
+painel_usado     = ""    # indica qual seção está aberta
+chamar_acao      = ""    # indica qual ação está ativa
+frame_zona_inputs = None # referência ao frame de campos
 
 
 # ============= FUNÇÃO AUXILIAR: CONVERTE DATA BR PARA BANCO =============
@@ -173,6 +156,29 @@ def data_br_para_banco(data_br):
     except Exception:
         pass
     return data_br                                              # retorna original se não conseguir converter
+
+
+# ============= FUNÇÃO AUXILIAR: CONVERTE DATA DO BANCO PARA BR =============
+
+def data_banco_para_br(data_banco):
+    """Converte AAAA-MM-DD para DD/MM/AAAA para exibir nos campos."""
+    try:
+        partes = str(data_banco).strip().split("-")
+        if len(partes) == 3:
+            ano, mes, dia = partes
+            return f"{dia}/{mes}/{ano}"
+    except Exception:
+        pass
+    return str(data_banco)                                      # retorna original se não conseguir converter
+
+
+# ============= FUNÇÃO DE MENSAGEM INLINE =============
+
+def mostrar_mensagem_inline(mensagem, cor="green"):
+    """Exibe mensagem de resultado diretamente no painel, abaixo do formulário."""
+    global label_mensagem
+    if label_mensagem:
+        label_mensagem.configure(text=mensagem, text_color=cor)
 
 
 # ============= FUNÇÃO DE CONFIRMAÇÃO DO CRUD =============
@@ -192,14 +198,20 @@ def confirma_crud():
     v7 = campo7_ativo.get().strip() if campo7_ativo else ""
 
     label_erro_crud.configure(text="")                          # limpa erro anterior
+    mostrar_mensagem_inline("")                                 # limpa mensagem de sucesso anterior
 
     # --- VALIDAÇÃO DE CAMPOS ---
-    if chamar_acao in ["Acrescentar", "Atualizar"]:             # todos os campos devem estar preenchidos
+    if chamar_acao == "Acrescentar":                            # todos os campos devem estar preenchidos ao inserir
         if (campo1_ativo and not v1) or (campo2_ativo and not v2) or \
            (campo3_ativo and not v3) or (campo4_ativo and not v4) or \
            (campo5_ativo and not v5) or (campo6_ativo and not v6) or \
            (campo7_ativo and not v7):
-            label_erro_crud.configure(text="Preencha todos os campos do formulário!", text_color="#e74c3c")
+            label_erro_crud.configure(text="Preencha todos os campos do formulário para acrescentar!", text_color="#e74c3c")
+            return
+
+    elif chamar_acao == "Atualizar":                            # apenas o identificador (campo 1) é estritamente obrigatório
+        if not v1:
+            label_erro_crud.configure(text="Preencha o campo identificador obrigatório para atualizar!", text_color="#e74c3c")
             return
 
     elif chamar_acao == "Pesquisar":                            # pelo menos um campo deve ser preenchido
@@ -245,7 +257,7 @@ def confirma_crud():
                     f"Email: {cliente['email']}\n"
                     f"Sexo: {cliente['sexo']}\n"
                     f"Telefone: {cliente['telefone']}\n"
-                    f"Nascimento: {cliente['data_nascimento']}\n"
+                    f"Nascimento: {data_banco_para_br(cliente['data_nascimento'])}\n"
                     f"Status: {cliente['status']}"
                 )
             else:
@@ -253,51 +265,21 @@ def confirma_crud():
                 return
 
         elif chamar_acao == "Atualizar":
-            v6_banco = data_br_para_banco(v6)                   # converte data nascimento para formato do banco
+            v6_banco = data_br_para_banco(v6) if v6 else ""     # converte data caso preenchida
             sucesso = crud.update_pessoa(v1, v2, v3, v4.upper(), v5, v6_banco, v7)
             if sucesso:
-                mensagem_alerta = "Dados atualizados com sucesso!"
+                mensagem_alerta = "Dados do cliente atualizados com sucesso!"
             else:
-                label_erro_crud.configure(text="CPF/CNPJ não encontrado para atualização!", text_color="#e74c3c")
+                label_erro_crud.configure(text="CPF/CNPJ não encontrado ou erro na atualização!", text_color="#e74c3c")
                 return
 
         elif chamar_acao == "Remover":
-            cliente_alvo = crud.read_pessoa_por_cpf(v1)
-
-            if cliente_alvo is None:
-                label_erro_crud.configure(text="Cliente não consta no sistema. Confira os dados informados.", text_color="#e74c3c")
+            sucesso = crud.delete_pessoa(v1)
+            if sucesso:
+                mensagem_alerta = "Cliente removido com sucesso!"
+            else:
+                label_erro_crud.configure(text="Erro ao remover ou cliente não encontrado.", text_color="#e74c3c")
                 return
-
-            popup_confirm = ctk.CTkToplevel(janela)
-            popup_confirm.title("Confirmar Exclusão")
-            popup_confirm.geometry("420x230")
-            popup_confirm.grab_set()
-
-            ctk.CTkLabel(
-                popup_confirm,
-                text=(
-                    f"Tem certeza que deseja excluir o cliente?\n\n"
-                    f"Nome: {cliente_alvo['nome_completo']}\n"
-                    f"CPF/CNPJ: {cliente_alvo['cpf_cnpj']}\n"
-                    f"Telefone: {cliente_alvo['telefone']}"
-                ),
-                font=ctk.CTkFont(size=13), wraplength=380, justify="center"
-            ).pack(pady=(25, 20))
-
-            frame_btns = ctk.CTkFrame(popup_confirm, fg_color="transparent")
-            frame_btns.pack()
-
-            def confirmar_exclusao():
-                sucesso = crud.delete_pessoa(cliente_alvo["cpf_cnpj"])
-                popup_confirm.destroy()
-                if sucesso:
-                    mostrar_msg_sucesso("Cliente removido com sucesso!")
-                else:
-                    mostrar_msg_sucesso("Erro ao remover. Tente novamente.")
-
-            ctk.CTkButton(frame_btns, text="Sim, Remover", fg_color="#c0392b", hover_color="#e74c3c", width=130, command=confirmar_exclusao).pack(side="left", padx=10)
-            ctk.CTkButton(frame_btns, text="Cancelar", fg_color="#34495e", hover_color="#2c3e50", width=130, command=popup_confirm.destroy).pack(side="left", padx=10)
-            return
 
 
     # ====== CRUD DE SEGURADORAS ======
@@ -305,7 +287,7 @@ def confirma_crud():
     elif painel_usado == "Seguradoras":
 
         if chamar_acao == "Acrescentar":
-            sucesso = crud.create_seguradora(v1, v2, v3)       # nome_fantasia, cnpj, telefone_suporte
+            sucesso = crud.create_seguradora(v1, v2, v3)        # nome_fantasia, cnpj, telefone_suporte
             if sucesso:
                 mensagem_alerta = "Seguradora adicionada com sucesso!"
             else:
@@ -353,27 +335,27 @@ def confirma_crud():
     elif painel_usado == "Planos":
 
         if chamar_acao == "Acrescentar":
-            sucesso = crud.create_plano(v1, v2, v3)
+            sucesso = crud.create_plano(v1, v2, v3)             # id_seguradora, tipo_cobertura, nome_plano
             if sucesso:
-                mensagem_alerta = "Plano adicionado com sucesso!"
+                mensagem_alerta = "Plano cadastrado com sucesso!"
             else:
                 label_erro_crud.configure(text="Erro ao salvar plano no banco.", text_color="#e74c3c")
                 return
 
         elif chamar_acao == "Pesquisar":
-            planos = None
-            
+            plano = None
             if v1:
-                planos = crud.read_plano_por_id(v1)
+                plano = crud.read_plano_por_id(v1)
             elif v2:
-                planos = crud.read_plano_por_nome(v2)
+                plano = crud.read_plano_por_nome(v2)
 
-            if planos:
+            if plano:
                 mensagem_alerta = (
-                    f"Plano encontrado!\n\n"
-                    f"ID - Plano: {planos['plano_id']}\n"
-                    f"ID - Seguradora: {planos['seguradora_id']}\n"
-                    f"Tipo Cobertura: {planos['cobertura']}\n"
+                    f"Plano localizado!\n\n"
+                    f"ID Plano: {plano['id_plano']}\n"
+                    f"ID Seguradora: {plano['id_seguradora']}\n"
+                    f"Nome do Plano: {plano['nome_plano']}\n"
+                    f"Tipo Cobertura: {plano['tipo_cobertura']}"
                 )
             else:
                 label_erro_crud.configure(text="Nenhum plano localizado!", text_color="#e74c3c")
@@ -410,14 +392,13 @@ def confirma_crud():
 
         elif chamar_acao == "Pesquisar":
             bem = crud.read_bem_por_id(v1)
-
             if bem:
                 mensagem_alerta = (
                     f"Bem encontrado!\n\n"
                     f"ID Bem: {bem['id_bem']}\n"
                     f"ID Pessoa: {bem['id_pessoa']}\n"
-                    f"Tipo: {bem['tipo_bem']}\n"
-                    f"Descrição: {bem['descricao_bem']}\n"
+                    f"Tipo do Bem: {bem['tipo_bem']}\n"
+                    f"Descrição: {bem['descricao']}\n"
                     f"Valor Estimado: R$ {bem['valor_estimado']}"
                 )
             else:
@@ -425,11 +406,11 @@ def confirma_crud():
                 return
 
         elif chamar_acao == "Atualizar":
-            sucesso = crud.update_bem(v1, v2, v3, v4)
+            sucesso = crud.update_bem(v1, v2, v3, v4, v5)
             if sucesso:
                 mensagem_alerta = "Bem atualizado com sucesso!"
             else:
-                label_erro_crud.configure(text="ID de bem não encontrado!", text_color="#e74c3c")
+                label_erro_crud.configure(text="ID do bem não encontrado!", text_color="#e74c3c")
                 return
 
         elif chamar_acao == "Remover":
@@ -437,121 +418,103 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Bem removido com sucesso!"
             else:
-                label_erro_crud.configure(text="Nenhum bem encontrado para remoção!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nenhum bem encontrado para exclusão!", text_color="#e74c3c")
                 return
 
 
     # ====== CRUD DE APÓLICES ======
 
-    elif painel_usado == "Apólices":
+    elif painel_usado == "Apolices":
 
         if chamar_acao == "Acrescentar":
-            v3_banco = data_br_para_banco(v3)                   # converte data início para formato do banco
-            v4_banco = data_br_para_banco(v4)                   # converte data fim para formato do banco
-            sucesso = crud.create_apolice(v2, v3_banco, v4_banco)
+            sucesso = crud.create_apolice(v1, v2, v3, v4, v5)
             if sucesso:
-                mensagem_alerta = "Apólice adicionada com sucesso!"
+                mensagem_alerta = "Apólice registrada com sucesso!"
             else:
-                label_erro_crud.configure(text="Erro ao salvar apólice no banco.", text_color="#e74c3c")
+                label_erro_crud.configure(text="Erro ao criar apólice. Verifique os dados.", text_color="#e74c3c")
                 return
 
         elif chamar_acao == "Pesquisar":
-            apolice = None
-            if v1:
-                apolice = crud.read_apolice(v1)
-            elif v2:
-                apolice = crud.read_apolice_por_cotacao(v2)
-
+            apolice = crud.read_apolice_por_id(v1)
             if apolice:
                 mensagem_alerta = (
-                    f"Apólice localizada!\n\n"
-                    f"ID Apólice: {apolice['id_apolice']}\n"
-                    f"ID Cotação: {apolice['id_cotacao']}\n"
-                    f"Início Vigência: {apolice['inicio']}\n"
-                    f"Fim Vigência: {apolice['fim']}"
+                    f"Apólice encontrada!\n\n"
+                    f"Nº Apólice: {apolice['id_apolice']}\n"
+                    f"ID Bem: {apolice['id_bem']}\n"
+                    f"ID Plano: {apolice['id_plano']}\n"
+                    f"Franquia: R$ {apolice['valor_franquia']}\n"
+                    f"Prêmio: R$ {apolice['valor_premio']}"
                 )
             else:
-                label_erro_crud.configure(text="Nenhuma apólice localizada!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Apólice não localizada!", text_color="#e74c3c")
                 return
 
         elif chamar_acao == "Atualizar":
-            v3_banco = data_br_para_banco(v3)
-            v4_banco = data_br_para_banco(v4)
-            sucesso = crud.update_apolice(v1, v3_banco, v4_banco)
+            sucesso = crud.update_apolice(v1, v2, v3, v4, v5)
             if sucesso:
-                mensagem_alerta = "Apólice atualizada com sucesso!"
+                mensagem_alerta = "Apólice modificada com sucesso!"
             else:
-                label_erro_crud.configure(text="ID de apólice não encontrado!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nº de apólice não cadastrado!", text_color="#e74c3c")
                 return
 
         elif chamar_acao == "Remover":
             sucesso = crud.delete_apolice(v1)
             if sucesso:
-                mensagem_alerta = "Apólice removida com sucesso!"
+                mensagem_alerta = "Apólice removida do sistema com sucesso!"
             else:
-                label_erro_crud.configure(text="Nenhuma apólice encontrada para remoção!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Erro ao deletar ou apólice não existente.", text_color="#e74c3c")
                 return
 
 
-    # ====== CRUD DE VENDAS (cotacoes) ======
+    # ====== CRUD DE VENDAS ======
 
     elif painel_usado == "Vendas":
 
         if chamar_acao == "Acrescentar":
-            v6_banco = data_br_para_banco(v6)                   # converte data cotação para formato do banco
-            sucesso = crud.create_cotacao(v2, v3, v4, v5, v6_banco)
+            v4_banco = data_br_para_banco(v4)                   # data de vigência inicio
+            v5_banco = data_br_para_banco(v5)                   # data de vigência fim
+            sucesso = crud.create_venda(v1, v2, v3, v4_banco, v5_banco)
             if sucesso:
-                mensagem_alerta = "Venda registrada com sucesso!"
+                mensagem_alerta = "Venda concluída com sucesso!"
             else:
-                label_erro_crud.configure(text="Erro ao registrar venda no banco.", text_color="#e74c3c")
+                label_erro_crud.configure(text="Erro ao registrar venda.", text_color="#e74c3c")
                 return
 
         elif chamar_acao == "Pesquisar":
-            venda = None
-            if v1:
-                venda = crud.read_cotacao(v1)
-            elif v2:
-                venda = crud.read_cotacao_por_pessoa(v2)
-
+            venda = crud.read_venda_por_id(v1)
             if venda:
                 mensagem_alerta = (
-                    f"Venda encontrada!\n\n"
-                    f"ID Cotação: {venda['c.id_cotacao']}\n"
-                    f"Nome Pessoa: {venda['p.nome_pessoa']}\n"
-                    f"Nome Seguradora: {venda['s.nome_fantasia']}\n"
-                    f"Nome Plano: {venda['pl.nome_plano']}\n"
-                    f"Valor: R$ {venda['c.valor_cotacao']}\n"
-                    f"Data: {venda['c.data_cotacao']}"
+                    f"Registro de Venda Encontrado!\n\n"
+                    f"ID Venda: {venda['id_venda']}\n"
+                    f"Nº Apólice: {venda['id_apolice']}\n"
+                    f"CPF Cliente: {venda['cpf_cnpj']}\n"
+                    f"Vigência Início: {data_banco_para_br(venda['data_vigencia_inicio'])}\n"
+                    f"Vigência Fim: {data_banco_para_br(venda['data_vigencia_fim'])}"
                 )
             else:
-                label_erro_crud.configure(text="Nenhuma venda localizada!", text_color="#e74c3c")
+                label_erro_crud.configure(text="ID de venda inexistente!", text_color="#e74c3c")
                 return
 
         elif chamar_acao == "Atualizar":
-            v6_banco = data_br_para_banco(v6)
-            sucesso = crud.update_cotacao(v1, v2, v3, v4, v5, v6_banco)
+            v4_banco = data_br_para_banco(v4) if v4 else ""
+            v5_banco = data_br_para_banco(v5) if v5 else ""
+            sucesso = crud.update_venda(v1, v2, v3, v4_banco, v5_banco)
             if sucesso:
-                mensagem_alerta = "Venda atualizada com sucesso!"
+                mensagem_alerta = "Informações da venda atualizadas!"
             else:
-                label_erro_crud.configure(text="ID de cotação não encontrado!", text_color="#e74c3c")
+                label_erro_crud.configure(text="ID da venda não localizado!", text_color="#e74c3c")
                 return
 
         elif chamar_acao == "Remover":
-            sucesso = crud.delete_cotacao(v1)
+            sucesso = crud.delete_venda(v1)
             if sucesso:
                 mensagem_alerta = "Venda removida com sucesso!"
             else:
-                label_erro_crud.configure(text="Nenhuma venda encontrada para remoção!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nenhum registro de venda correspondente para remover.", text_color="#e74c3c")
                 return
 
-    # --- Limpeza dos campos após operação bem-sucedida ---
-    for campo in [campo1_ativo, campo2_ativo, campo3_ativo,
-                  campo4_ativo, campo5_ativo, campo6_ativo, campo7_ativo]:
-        if campo:
-            campo.configure(state="normal")
-            campo.delete(0, "end")
-
-    mostrar_msg_sucesso(mensagem_alerta)                        # exibe o popup de resultado final
+    # Exibe a mensagem de sucesso inline diretamente na tela sem pop-up externo
+    mostrar_mensagem_inline(mensagem_alerta, "green")
 
 
 # ============= CONSTRUÇÃO DINÂMICA DOS CAMPOS DO FORMULÁRIO =============
@@ -560,20 +523,21 @@ def gerar_campos_formulario(acao, nome_secao):
     global campo1_ativo, campo2_ativo, campo3_ativo, campo4_ativo
     global campo5_ativo, campo6_ativo, campo7_ativo
     global painel_usado, chamar_acao, label_erro_crud
-
+    
     painel_usado = nome_secao
-    chamar_acao  = acao
+    chamar_acao = acao
 
     for w in frame_zona_inputs.winfo_children():
         w.destroy()
 
     ctk.CTkLabel(
-        frame_zona_inputs,
-        text=f"Formulário para: {acao} {nome_secao[:-1]}",
-        font=ctk.CTkFont(size=14, weight="bold"),
+        frame_zona_inputs, 
+        text=f"Formulário para: {acao} {nome_secao[:-1]}", 
+        font=ctk.CTkFont(size=14, weight="bold"), 
         text_color="#3498db"
-    ).pack(pady=(10, 5))
+    ).pack(pady=(0, 15))
 
+    # Variáveis locais para configuração dinâmica das Labels e Placeholders
     lbl1, placeholder1, validador1 = None, None, None
     lbl2, placeholder2, validador2 = None, None, None
     lbl3, placeholder3, validador3 = None, None, None
@@ -582,45 +546,49 @@ def gerar_campos_formulario(acao, nome_secao):
     lbl6, placeholder6, validador6 = None, None, None
     lbl7, placeholder7, validador7 = None, None, None
 
-    # ---- Define quais campos aparecem para cada seção e ação ----
+    # Redefine referências globais de inputs
+    campo1_ativo = campo2_ativo = campo3_ativo = campo4_ativo = None
+    campo5_ativo = campo6_ativo = campo7_ativo = None
+
 
     if nome_secao == "Clientes":
         if acao == "Pesquisar":
-            lbl1, placeholder1, validador1 = "CPF/CNPJ (Filtro):",     "Deixe vazio para filtrar por outro", validador_cpf
-            lbl2, placeholder2, validador2 = "Nome Completo (Filtro):", "Deixe vazio para filtrar por outro", None
-            lbl5, placeholder5, validador5 = "Telefone (Filtro):",      "Deixe vazio para filtrar por outro", validador_telefone
-
+            lbl1, placeholder1, validador1 = "CPF / CNPJ:", "Filtrar por CPF (Somente Números)", validador_cpf
+            lbl2, placeholder2, validador2 = "Nome Completo:", "Filtrar por Nome", None
+            lbl5, placeholder5, validador5 = "Telefone:", "Filtrar por Telefone (DDD + Número)", validador_telefone
         elif acao == "Remover":
-            # Seguir a mesma linha dos outros....apagar somente com o ID
-            lbl2, placeholder2, validador2 = "ID do Cliente:", "Digite o ID do cliente para remover", None
-            # lbl1, placeholder1, validador1 = "CPF/CNPJ:",      "Digite o CPF para buscar",   validador_cpf
-            # lbl2, placeholder2, validador2 = "Nome Completo:", "Preenchido automaticamente", None
-            # lbl3, placeholder3, validador3 = "Email:",         "Preenchido automaticamente", None
-            # lbl5, placeholder5, validador5 = "Telefone:",      "Preenchido automaticamente", validador_telefone
-
-        else:                                                   # Acrescentar e Atualizar
-            lbl1, placeholder1, validador1 = "CPF/CNPJ (Max 11):",          "Digite apenas números",  validador_cpf
-            lbl2, placeholder2, validador2 = "Nome Completo:",              "Nome da pessoa",          None
-            lbl3, placeholder3, validador3 = "Email:",                      "exemplo@email.com",       None
-            lbl4, placeholder4, validador4 = "Sexo (M/F/O):",               "M, F ou O",               validador_sexo  # ← validador aplicado
-            lbl5, placeholder5, validador5 = "Telefone (Max 11):",          "DDD + Número",            validador_telefone
-            lbl6, placeholder6, validador6 = "Data de Nascimento (DD/MM/AAAA):", "Ex: 20/02/1990",    None
-            lbl7, placeholder7, validador7 = "Status (Ativo/Inativo):",     "Status cadastral",        None
+            lbl1, placeholder1, validador1 = "CPF / CNPJ do Cliente:", "Digite o CPF do cliente para remover", validador_cpf
+        elif acao == "Atualizar":
+            lbl1, placeholder1, validador1 = "CPF / CNPJ (Obrigatório):", "CPF do cliente que deseja alterar", validador_cpf
+            lbl2, placeholder2, validador2 = "Nome Completo:", "Novo nome ou mantenha vazio", None
+            lbl3, placeholder3, validador3 = "E-mail:", "Novo e-mail ou mantenha vazio", None
+            lbl4, placeholder4, validador4 = "Sexo (M/F/O):", "Novo Sexo ou mantenha vazio", validador_sexo
+            lbl5, placeholder5, validador5 = "Telefone:", "Novo telefone ou mantenha vazio", validador_telefone
+            lbl6, placeholder6, validador6 = "Data de Nascimento:", "Nova Data (DD/MM/AAAA) ou mantenha vazio", None
+            lbl7, placeholder7, validador7 = "Status (Ativo/Inativo):", "Novo status ou mantenha vazio", None
+        else: # Acrescentar
+            lbl1, placeholder1, validador1 = "CPF / CNPJ:", "Digite apenas números (11 dígitos)", validador_cpf
+            lbl2, placeholder2, validador2 = "Nome Completo:", "Nome do cliente", None
+            lbl3, placeholder3, validador3 = "E-mail:", "exemplo@dominio.com", None
+            lbl4, placeholder4, validador4 = "Sexo (M/F/O):", "M para Masculino, F para Feminino, O para Outros", validador_sexo
+            lbl5, placeholder5, validador5 = "Telefone:", "DDD + Número (Apenas números)", validador_telefone
+            lbl6, placeholder6, validador6 = "Data de Nascimento:", "Formato DD/MM/AAAA", None
+            lbl7, placeholder7, validador7 = "Status (Ativo/Inativo):", "Padrão: Ativo", None
 
     elif nome_secao == "Seguradoras":
         if acao == "Pesquisar":
-            lbl1, placeholder1, validador1 = "ID Seguradora:", "Filtrar pelo ID da seguradora", None
-            lbl2, placeholder2, validador2 = "CNPJ:",          "Filtrar pelo CNPJ",             None
+            lbl1, placeholder1, validador1 = "ID Seguradora:", "Filtrar pelo Código ID", None
+            lbl2, placeholder2, validador2 = "CNPJ:", "Filtrar pelo CNPJ", None
         elif acao == "Remover":
-            lbl2, placeholder2, validador2 = "ID da Seguradora:", "Digite o ID da seguradora para remover", None
+            lbl1, placeholder1, validador1 = "ID da Seguradora:", "Digite o ID da seguradora para remover", None
         elif acao == "Atualizar":
-            lbl1, placeholder1, validador1 = "ID Seguradora (obrigatório):", "ID para localizar a seguradora", None
-            lbl2, placeholder2, validador2 = "Nome Fantasia:",               "Nome da seguradora",             None
-            lbl3, placeholder3, validador3 = "CNPJ:",                        "CNPJ da seguradora",             None
-            lbl4, placeholder4, validador4 = "Telefone Suporte:",            "Telefone de suporte",            None
+            lbl1, placeholder1, validador1 = "ID Seguradora (Obrigatório):", "ID para localizar a seguradora", None
+            lbl2, placeholder2, validador2 = "Nome Fantasia:", "Novo Nome Fantasia ou mantenha vazio", None
+            lbl3, placeholder3, validador3 = "CNPJ:", "Novo CNPJ ou mantenha vazio", None
+            lbl4, placeholder4, validador4 = "Telefone Suporte:", "Novo telefone ou mantenha vazio", None
         else:
-            lbl1, placeholder1, validador1 = "Nome Fantasia:",    "Nome da seguradora",  None
-            lbl2, placeholder2, validador2 = "CNPJ:",             "CNPJ da seguradora",  None
+            lbl1, placeholder1, validador1 = "Nome Fantasia:", "Nome da seguradora", None
+            lbl2, placeholder2, validador2 = "CNPJ:", "CNPJ da seguradora", None
             lbl3, placeholder3, validador3 = "Telefone Suporte:", "Telefone de suporte", None
 
     elif nome_secao == "Planos":
@@ -630,170 +598,137 @@ def gerar_campos_formulario(acao, nome_secao):
         elif acao == "Remover":
             lbl1, placeholder1, validador1 = "ID Plano:", "Digite o ID do plano para remover", None
         elif acao == "Atualizar":
-            lbl1, placeholder1, validador1 = "ID Plano (obrigatório):", "ID para localizar o plano",  None
-            lbl2, placeholder2, validador2 = "ID Seguradora:",          "ID da seguradora vinculada", None
-            lbl3, placeholder3, validador3 = "Tipo Cobertura:",         "Ex: Total, Parcial",         None
-            lbl4, placeholder4, validador4 = "Nome Plano:",             "Nome do plano",              None
+            lbl1, placeholder1, validador1 = "ID Plano (Obrigatório):", "ID para localizar o plano", None
+            lbl2, placeholder2, validador2 = "ID Seguradora:", "Novo ID da seguradora ou mantenha vazio", None
+            lbl3, placeholder3, validador3 = "Tipo Cobertura:", "Novo Tipo (Ex: Total, Parcial) ou mantenha vazio", None
+            lbl4, placeholder4, validador4 = "Nome Plano:", "Novo nome do plano ou mantenha vazio", None
         else:
-            lbl1, placeholder1, validador1 = "ID Seguradora:",  "ID da seguradora vinculada", None
-            lbl2, placeholder2, validador2 = "Tipo Cobertura:", "Ex: Total, Parcial",         None
-            lbl3, placeholder3, validador3 = "Nome Plano:",     "Nome do plano",              None
+            lbl1, placeholder1, validador1 = "ID Seguradora:", "ID da seguradora vinculada", None
+            lbl2, placeholder2, validador2 = "Tipo Cobertura:", "Ex: Total, Parcial", None
+            lbl3, placeholder3, validador3 = "Nome Plano:", "Nome do plano", None
 
     elif nome_secao == "Bens":
         if acao == "Pesquisar":
             lbl1, placeholder1, validador1 = "ID Bem:", "Filtrar pelo ID do bem", None
         elif acao == "Remover":
-            lbl2, placeholder2, validador2 = "ID do Bem:", "Digite o ID do bem para remover", None
+            lbl1, placeholder1, validador1 = "ID do Bem:", "Digite o ID do bem para remover", None
         elif acao == "Atualizar":
-            lbl1, placeholder1, validador1 = "ID Bem (obrigatório):", "ID para localizar o bem", None
-            lbl2, placeholder2, validador2 = "Tipo Bem:",             "Ex: Imóvel, Veículo",     None
-            lbl3, placeholder3, validador3 = "Descrição:",            "Descrição do bem",        None
-            lbl4, placeholder4, validador4 = "Valor Estimado R$:",    "Ex: 50000.00",            None
+            lbl1, placeholder1, validador1 = "ID Bem (Obrigatório):", "ID para localizar o bem", None
+            lbl2, placeholder2, validador2 = "Tipo Bem:", "Novo tipo (Ex: Imóvel, Veículo) ou mantenha vazio", None
+            lbl3, placeholder3, validador3 = "Descrição:", "Nova descrição ou mantenha vazio", None
+            lbl4, placeholder4, validador4 = "Valor Estimado R$:", "Novo valor ou mantenha vazio", None
+            lbl5, placeholder5, validador5 = "ID Proprietário (CPF):", "Novo CPF do proprietário ou mantenha vazio", validador_cpf
         else:
-            lbl1, placeholder1, validador1 = "ID Pessoa:",         "ID do dono do bem",   None
-            lbl2, placeholder2, validador2 = "Tipo Bem:",          "Ex: Imóvel, Veículo", None
-            lbl3, placeholder3, validador3 = "Descrição:",         "Descrição do bem",    None
-            lbl4, placeholder4, validador4 = "Valor Estimado R$:", "Ex: 50000.00",        None
+            lbl1, placeholder1, validador1 = "Tipo Bem:", "Ex: Imóvel, Veículo, Celular", None
+            lbl2, placeholder2, validador2 = "Descrição:", "Detalhes do bem (Modelo, Placa, Endereço)", None
+            lbl3, placeholder3, validador3 = "Valor Estimado R$:", "Ex: 50000.00", None
+            lbl4, placeholder4, validador4 = "ID Proprietário (CPF):", "CPF do cliente cadastrado", validador_cpf
 
-    elif nome_secao == "Apólices":
+    elif nome_secao == "Apolices":
         if acao == "Pesquisar":
-            lbl1, placeholder1, validador1 = "ID Apólice (Filtro):", "Filtrar por ID da Apólice", validador_apolice
-            lbl2, placeholder2, validador2 = "ID Cotação (Filtro):", "Filtrar por ID da Cotação", validador_venda
+            lbl1, placeholder1, validador1 = "Nº Apólice:", "Código identificador da apólice", validador_apolice
         elif acao == "Remover":
-            lbl2, placeholder2, validador2 = "ID da Apólice:", "Digite o ID da apólice para remover", None
+            lbl1, placeholder1, validador1 = "Nº Apólice:", "Digite o Nº da apólice para remover", validador_apolice
+        elif acao == "Atualizar":
+            lbl1, placeholder1, validador1 = "Nº Apólice (Obrigatório):", "Número da apólice que deseja alterar", validador_apolice
+            lbl2, placeholder2, validador2 = "ID Bem:", "Novo ID do Bem ou mantenha vazio", None
+            lbl3, placeholder3, validador3 = "ID Plano:", "Novo ID do Plano ou mantenha vazio", None
+            lbl4, placeholder4, validador4 = "Valor Franquia R$:", "Novo valor de franquia ou mantenha vazio", None
+            lbl5, placeholder5, validador5 = "Valor Prêmio R$:", "Novo valor de prêmio ou mantenha vazio", None
         else:
-            lbl1, placeholder1, validador1 = "ID Apólice (id_apolice):",   "Código identificador",          validador_apolice
-            lbl2, placeholder2, validador2 = "ID Cotação (id_cotacao):",   "Chave estrangeira de Cotações", validador_venda
-            lbl3, placeholder3, validador3 = "Data Início (DD/MM/AAAA):",  "Ex: 01/01/2024",               None
-            lbl4, placeholder4, validador4 = "Data Fim (DD/MM/AAAA):",     "Ex: 01/01/2025",               None
+            lbl1, placeholder1, validador1 = "Nº Apólice:", "Código da apólice (Até 15 caracteres)", validador_apolice
+            lbl2, placeholder2, validador2 = "ID Bem:", "ID do bem associado", None
+            lbl3, placeholder3, validador3 = "ID Plano:", "ID do plano associado", None
+            lbl4, placeholder4, validador4 = "Valor Franquia R$:", "Valor pago em caso de sinistro", None
+            lbl5, placeholder5, validador5 = "Valor Prêmio R$:", "Custo total da apólice", None
 
     elif nome_secao == "Vendas":
         if acao == "Pesquisar":
-            lbl1, placeholder1, validador1 = "ID Cotação:", "Filtrar por Cotação",       validador_venda
-            lbl2, placeholder2, validador2 = "ID Pessoa:",  "Filtrar por ID do cliente", None
+            lbl1, placeholder1, validador1 = "ID Venda:", "Código de identificação da venda", validador_venda
         elif acao == "Remover":
-            lbl2, placeholder2, validador2 = "ID da Venda:", "Digite o ID da venda para remover", None
+            lbl1, placeholder1, validador1 = "ID Venda:", "Digite o ID da venda para excluir", validador_venda
+        elif acao == "Atualizar":
+            lbl1, placeholder1, validador1 = "ID Venda (Obrigatório):", "ID da venda que deseja alterar", validador_venda
+            lbl2, placeholder2, validador2 = "Nº Apólice:", "Novo número da apólice ou mantenha vazio", validador_apolice
+            lbl3, placeholder3, validador3 = "CPF do Cliente:", "Novo CPF do cliente ou mantenha vazio", validador_cpf
+            lbl4, placeholder4, validador4 = "Vigência Início:", "Nova data de início (DD/MM/AAAA) ou mantenha vazio", None
+            lbl5, placeholder5, validador5 = "Vigência Fim:", "Nova data de término (DD/MM/AAAA) ou mantenha vazio", None
         else:
-            lbl1, placeholder1, validador1 = "ID Cotação (id_cotacao):", "Código identificador",            validador_venda
-            lbl2, placeholder2, validador2 = "ID Pessoa (id_pessoa):",   "Chave estrangeira de Pessoa",     None
-            lbl3, placeholder3, validador3 = "ID Seguradora:",           "Chave estrangeira de Seguradora", None
-            lbl4, placeholder4, validador4 = "ID Plano:",                "Chave estrangeira de Plano",      None
-            lbl5, placeholder5, validador5 = "Valor da Cotação R$:",     "Preço calculado",                 None
-            lbl6, placeholder6, validador6 = "Data Cotação (DD/MM/AAAA):", "Ex: 20/05/2025",               None
+            lbl1, placeholder1, validador1 = "ID Venda:", "Código da venda (Até 10 caracteres)", validador_venda
+            lbl2, placeholder2, validador2 = "Nº Apólice:", "Número da apólice contratada", validador_apolice
+            lbl3, placeholder3, validador3 = "CPF do Cliente:", "CPF do cliente comprador", validador_cpf
+            lbl4, placeholder4, validador4 = "Vigência Início:", "Formato DD/MM/AAAA", None
+            lbl5, placeholder5, validador5 = "Vigência Fim:", "Formato DD/MM/AAAA", None
 
-    # ---- Renderiza os campos conforme as variáveis definidas acima ----
-
-    campo1_ativo = None
+    # Geração dos widgets com base nas definições dinâmicas acima
     if lbl1:
         ctk.CTkLabel(frame_zona_inputs, text=lbl1, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
         campo1_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder1, width=340, height=30)
-        if validador1: campo1_ativo.configure(validate="key", validatecommand=(validador1, "%P"))
+        if validador1:
+            campo1_ativo.configure(validate="key", validatecommand=(validador1, "%P"))
         campo1_ativo.pack(pady=(2, 4))
 
-    campo2_ativo = None
     if lbl2:
         ctk.CTkLabel(frame_zona_inputs, text=lbl2, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
         campo2_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder2, width=340, height=30)
-        if validador2: campo2_ativo.configure(validate="key", validatecommand=(validador2, "%P"))
+        if validador2:
+            campo2_ativo.configure(validate="key", validatecommand=(validador2, "%P"))
         campo2_ativo.pack(pady=(2, 4))
 
-    campo3_ativo = None
     if lbl3:
         ctk.CTkLabel(frame_zona_inputs, text=lbl3, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
         campo3_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder3, width=340, height=30)
-        if validador3: campo3_ativo.configure(validate="key", validatecommand=(validador3, "%P"))
+        if validador3:
+            campo3_ativo.configure(validate="key", validatecommand=(validador3, "%P"))
         campo3_ativo.pack(pady=(2, 4))
 
-    campo4_ativo = None
     if lbl4:
         ctk.CTkLabel(frame_zona_inputs, text=lbl4, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
         campo4_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder4, width=340, height=30)
-        if validador4: campo4_ativo.configure(validate="key", validatecommand=(validador4, "%P"))
+        if validador4:
+            campo4_ativo.configure(validate="key", validatecommand=(validador4, "%P"))
         campo4_ativo.pack(pady=(2, 4))
 
-    campo5_ativo = None
     if lbl5:
         ctk.CTkLabel(frame_zona_inputs, text=lbl5, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
         campo5_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder5, width=340, height=30)
-        if validador5: campo5_ativo.configure(validate="key", validatecommand=(validador5, "%P"))
+        if validador5:
+            campo5_ativo.configure(validate="key", validatecommand=(validador5, "%P"))
         campo5_ativo.pack(pady=(2, 4))
 
-    campo6_ativo = None
     if lbl6:
         ctk.CTkLabel(frame_zona_inputs, text=lbl6, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
         campo6_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder6, width=340, height=30)
-        if validador6: campo6_ativo.configure(validate="key", validatecommand=(validador6, "%P"))
+        if validador6:
+            campo6_ativo.configure(validate="key", validatecommand=(validador6, "%P"))
         campo6_ativo.pack(pady=(2, 4))
 
-    campo7_ativo = None
     if lbl7:
         ctk.CTkLabel(frame_zona_inputs, text=lbl7, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
         campo7_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder7, width=340, height=30)
-        if validador7: campo7_ativo.configure(validate="key", validatecommand=(validador7, "%P"))
+        if validador7:
+            campo7_ativo.configure(validate="key", validatecommand=(validador7, "%P"))
         campo7_ativo.pack(pady=(2, 4))
 
-    # ---- Bloco exclusivo do Remover Clientes: busca automática ao sair do campo CPF ----
-
-    if nome_secao == "Clientes" and acao == "Remover":
-
-        for campo in [campo2_ativo, campo3_ativo, campo5_ativo]:
-            if campo:
-                campo.configure(state="disabled")
-
-        def buscar_cliente_por_cpf(event=None):
-            cpf_digitado = campo1_ativo.get().strip()
-
-            label_erro_crud.configure(text="")
-            for campo in [campo2_ativo, campo3_ativo, campo5_ativo]:
-                if campo:
-                    campo.configure(state="normal")
-                    campo.delete(0, "end")
-                    campo.configure(state="disabled")
-
-            if not cpf_digitado:
-                return
-
-            cliente_encontrado = crud.read_pessoa_por_cpf(str(cpf_digitado))
-
-            if cliente_encontrado is None:
-                label_erro_crud.configure(
-                    text="Cliente não consta no sistema. Confira os dados informados.",
-                    text_color="#e74c3c"
-                )
-                return
-
-            for campo, valor in [
-                (campo2_ativo, cliente_encontrado["nome_completo"]),
-                (campo3_ativo, cliente_encontrado["email"]),
-                (campo5_ativo, cliente_encontrado["telefone"]),
-            ]:
-                if campo:
-                    campo.configure(state="normal")
-                    campo.delete(0, "end")
-                    campo.insert(0, valor)
-                    campo.configure(state="disabled")
-
-        campo1_ativo.bind("<FocusOut>", buscar_cliente_por_cpf)
-        campo1_ativo.bind("<Return>",   buscar_cliente_por_cpf)
-
-    # ---- Botão de confirmação ---- #
+    # ---- Botão de confirmação ----
     ctk.CTkButton(
-        frame_zona_inputs,
-        text=f"Confirmar {acao}",
-        fg_color="#27ae60",
-        hover_color="#2ecc71",
-        width=200,
-        height=35,
+        frame_zona_inputs, 
+        text=f"Confirmar {acao}", 
+        fg_color="#27ae60", 
+        hover_color="#2ecc71", 
+        width=200, 
+        height=35, 
         command=confirma_crud
     ).pack(pady=12)
 
+    # Label para exibição de erros de validação localizados
     label_erro_crud = ctk.CTkLabel(
-        frame_zona_inputs,
-        text="",
-        font=ctk.CTkFont(size=12, weight="bold"),
+        frame_zona_inputs, 
+        text="", 
+        font=ctk.CTkFont(size=12, weight="bold"), 
         text_color="#e74c3c"
     )
-    label_erro_crud.pack(pady=(0, 10))
+    label_erro_crud.pack(pady=(0, 5))
 
 
 # ============= FUNÇÕES DE PONTE PARA OS BOTÕES DO CRUD =============
@@ -813,55 +748,87 @@ def acao_remover_clicada():
 
 # ============= FUNÇÃO GERAL PARA MONTAR A ESTRUTURA DO PAINEL =============
 
-secao_painel_aberto = ""
+frame_botoes_crud = None
 
 def montar_estrutura_painel(nome):
-    global frame_zona_inputs, secao_painel_aberto
-    secao_painel_aberto = nome
+    global frame_botoes_crud, frame_zona_inputs, label_erro_crud, label_mensagem
 
-    for w in frame_conteudo.winfo_children():
-        w.destroy()
+    for componente in frame_conteudo.winfo_children():
+        componente.destroy()
 
+    # Criação do cabeçalho da seção ativa
     ctk.CTkLabel(
-        frame_conteudo,
-        text=f"Painel de {nome}",
+        frame_conteudo, 
+        text=f"Painel de {nome}", 
         font=ctk.CTkFont(size=22, weight="bold")
     ).pack(pady=(20, 15))
 
+    # Sub-barra de ferramentas CRUD (Botões de ação superior internos)
     frame_botoes_crud = ctk.CTkFrame(frame_conteudo, fg_color="transparent")
     frame_botoes_crud.pack(pady=10)
 
-    ctk.CTkButton(frame_botoes_crud, text="Acrescentar", width=110, height=35,                                             command=acao_acrescentar_clicada).pack(side="left", padx=5)
-    ctk.CTkButton(frame_botoes_crud, text="Pesquisar",   width=110, height=35, fg_color="#34495e", hover_color="#2c3e50", command=acao_pesquisar_clicada).pack(side="left", padx=5)
-    ctk.CTkButton(frame_botoes_crud, text="Atualizar",   width=110, height=35, fg_color="#2980b9", hover_color="#3498db", command=acao_atualizar_clicada).pack(side="left", padx=5)
-    ctk.CTkButton(frame_botoes_crud, text="Remover",     width=110, height=35, fg_color="#c0392b", hover_color="#e74c3c", command=acao_remover_clicada).pack(side="left", padx=5)
+    ctk.CTkButton(frame_botoes_crud, text="Acrescentar", width=120, height=32, fg_color="#1abc9c", hover_color="#16a085", command=acao_acrescentar_clicada).pack(side="left", padx=6)
+    ctk.CTkButton(frame_botoes_crud, text="Pesquisar",   width=120, height=32, fg_color="#3498db", hover_color="#2980b9", command=acao_pesquisar_clicada).pack(side="left", padx=6)
+    ctk.CTkButton(frame_botoes_crud, text="Atualizar",   width=120, height=32, fg_color="#f1c40f", hover_color="#d35400", command=acao_atualizar_clicada).pack(side="left", padx=6)
+    ctk.CTkButton(frame_botoes_crud, text="Remover",     width=120, height=32, fg_color="#e74c3c", hover_color="#c0392b", command=acao_remover_clicada).pack(side="left", padx=6)
 
-    frame_zona_inputs = ctk.CTkScrollableFrame(frame_conteudo, fg_color="transparent")
-    frame_zona_inputs.pack(pady=10, fill="both", expand=True)
+    # Frame central com barra de rolagem onde o formulário é renderizado dinamicamente
+    frame_zona_inputs = ctk.CTkScrollableFrame(frame_conteudo, fg_color="transparent", width=450, height=320)
+    frame_zona_inputs.pack(fill="both", expand=True, padx=20, pady=5)
+
+    # LABEL FIXO INLINE: Onde as respostas e dados de sucesso/busca serão mostrados ao lado/abaixo
+    label_mensagem = ctk.CTkLabel(
+        frame_conteudo, 
+        text="", 
+        font=ctk.CTkFont(size=13, weight="normal"), 
+        justify="left", 
+        wraplength=600
+    )
+    label_mensagem.pack(pady=15, padx=20)
 
 
-# ============= FUNÇÕES DE PONTE PARA O MENU LATERAL =============
+# ============= SEÇÕES DE CHAMADAS DO MENU LATERAL =============
+
+secao_painel_aberto = ""
 
 def mostrar_tela_clientes():
+    global secao_painel_aberto
+    secao_painel_aberto = "Clientes"
     montar_estrutura_painel("Clientes")
+    gerar_campos_formulario("Pesquisar", "Clientes") # Abre na pesquisa por padrão
 
 def mostrar_secao_seguradoras():
+    global secao_painel_aberto
+    secao_painel_aberto = "Seguradoras"
     montar_estrutura_painel("Seguradoras")
+    gerar_campos_formulario("Pesquisar", "Seguradoras")
 
 def mostrar_secao_planos():
+    global secao_painel_aberto
+    secao_painel_aberto = "Planos"
     montar_estrutura_painel("Planos")
+    gerar_campos_formulario("Pesquisar", "Planos")
 
 def mostrar_secao_bens():
+    global secao_painel_aberto
+    secao_painel_aberto = "Bens"
     montar_estrutura_painel("Bens")
+    gerar_campos_formulario("Pesquisar", "Bens")
 
 def mostrar_secao_apolices():
-    montar_estrutura_painel("Apólices")
+    global secao_painel_aberto
+    secao_painel_aberto = "Apolices"
+    montar_estrutura_painel("Apolices")
+    gerar_campos_formulario("Pesquisar", "Apolices")
 
 def mostrar_secao_vendas():
+    global secao_painel_aberto
+    secao_painel_aberto = "Vendas"
     montar_estrutura_painel("Vendas")
+    gerar_campos_formulario("Pesquisar", "Vendas")
 
 
-# ============= BOTÕES DO MENU LATERAL =============
+# ============= COMPONENTES DO MENU LATERAL (BOTÕES) =============
 
 ctk.CTkButton(frame_lateral, text=" CLIENTES",    anchor="w", width=160, height=38, fg_color="transparent", hover_color="#0f3460", font=ctk.CTkFont(size=13), command=mostrar_tela_clientes).pack(pady=2, padx=10)
 ctk.CTkButton(frame_lateral, text=" SEGURADORAS", anchor="w", width=160, height=38, fg_color="transparent", hover_color="#0f3460", font=ctk.CTkFont(size=13), command=mostrar_secao_seguradoras).pack(pady=2, padx=10)
@@ -870,20 +837,11 @@ ctk.CTkButton(frame_lateral, text=" BENS",        anchor="w", width=160, height=
 ctk.CTkButton(frame_lateral, text=" APÓLICES",    anchor="w", width=160, height=38, fg_color="transparent", hover_color="#0f3460", font=ctk.CTkFont(size=13), command=mostrar_secao_apolices).pack(pady=2, padx=10)
 ctk.CTkButton(frame_lateral, text=" VENDAS",      anchor="w", width=160, height=38, fg_color="transparent", hover_color="#0f3460", font=ctk.CTkFont(size=13), command=mostrar_secao_vendas).pack(pady=2, padx=10)
 
-btn_sair_lateral = ctk.CTkButton(
-    frame_lateral,
-    text="SAIR",
-    anchor="center",
-    width=160,
-    height=40,
-    fg_color="#c0392b",
-    hover_color="#e74c3c",
-    font=ctk.CTkFont(size=13, weight="bold"),
-    command=fechar_login
-)
-btn_sair_lateral.pack(side="bottom", pady=20, padx=10)
+# Espaçador interno para empurrar o botão Sair para baixo
+ctk.CTkLabel(frame_lateral, text="").pack(fill="both", expand=True)
+
+ctk.CTkButton(frame_lateral, text=" LOGOUT / SAIR", anchor="w", width=160, height=38, fg_color="#e74c3c", hover_color="#c0392b", font=ctk.CTkFont(size=13, weight="bold"), command=fechar_login).pack(pady=15, padx=10)
 
 
-# ============= LOOP PRINCIPAL =============
-
+# Inicializa a execução da janela do Tkinter
 janela.mainloop()
