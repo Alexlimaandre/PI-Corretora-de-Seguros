@@ -3,14 +3,10 @@
 # Cada função faz UMA operação: criar, ler, atualizar ou deletar.
 
 from conn import conexao    # importa a função que abre a conexão
-
 conn   = conexao()                 # abre a conexão com o banco 
 cursor = conn.cursor()             # cria um cursor para executar comandos SQL
 
-
-
 #                  CREATE                   #
-
 
 def create_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
     # Insere um novo cliente na tabela pessoa
@@ -30,7 +26,6 @@ def create_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
         print("Erro ao criar pessoa:", e)
         return False        # avisa a interface que deu errado
 
-
 def create_apolice(id_cotacao, inicio, fim):
     # Insere uma nova apólice vinculada a uma cotação
     try:
@@ -47,7 +42,6 @@ def create_apolice(id_cotacao, inicio, fim):
         conn.rollback()
         print("Erro ao criar apólice:", e)
         return False
-
 
 def create_cotacao(id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao):
     # Insere uma nova cotação no banco
@@ -119,7 +113,6 @@ def create_bem(id_pessoa, tipo_bem, descricao_bem, valor_estimado):
 
 #                   READ                    #
 
-
 def read_todas_pessoas():
     # Retorna uma lista de dicionários com todos os clientes do banco
     try:
@@ -165,7 +158,6 @@ def read_pessoa_por_cpf(cpf):
         print("Erro ao buscar pessoa por CPF:", e)
         return None
 
-
 def read_pessoa_por_nome(nome):
     # Busca cliente pelo nome completo (sem diferenciar maiúsculas/minúsculas)
     try:
@@ -209,7 +201,6 @@ def read_pessoa_por_nome(nome):
         print("Erro ao buscar pessoa por nome:", e)
         return None
 
-
 def read_pessoa_por_telefone(telefone):
     # Busca cliente pelo número de telefone
     try:
@@ -250,7 +241,6 @@ def read_pessoa_por_telefone(telefone):
         conn.rollback()
         print("Erro ao buscar pessoa por telefone:", e)
         return None
-
 
 def read_apolice(id_apolice):
     # Busca apólice pelo ID — retorna dicionário ou None
@@ -299,7 +289,6 @@ def read_apolice(id_apolice):
         print("Erro ao buscar apólice:", e)
         return None
 
-
 def read_apolice_por_cotacao(id_cotacao):
     # Busca apólice pelo ID da cotação vinculada
     try:
@@ -347,8 +336,6 @@ def read_apolice_por_cotacao(id_cotacao):
         print("Erro ao buscar apólice por cotação:", e)
         return None
 
-
-
 def read_cotacao(id_cotacao):
     # Busca cotação pelo ID — retorna dicionário ou None
     try:
@@ -391,7 +378,6 @@ def read_cotacao(id_cotacao):
         print("Erro ao buscar cotação:", e)
         return None
 
-
 def read_cotacao_por_pessoa(id_pessoa):
     # Busca cotação pelo ID da pessoa vinculada
     try:
@@ -433,35 +419,6 @@ def read_cotacao_por_pessoa(id_pessoa):
         conn.rollback()
         print("Erro ao buscar cotação por pessoa:", e)
         return None
-
-# # Seguradoras
-## CONSULTA SEM UTILIDADE
-# def read_seguradoras():
-#     try:
-#         cursor.execute("""
-#                         SELECT 
-#                             id_seguradora AS id,
-#                             nome_fantasia AS nome,
-#                             cnpj,
-#                             telefone_suporte AS telefone
-#                         FROM Seguradora
-#                     """)
-#         resultados = cursor.fetchall()
-#         seguradoras = []
-#         for resultado in resultados:
-#             seguradora = {
-#                 "id": resultado[0],
-#                 "nome": resultado[1],
-#                 "cnpj": resultado[2],
-#                 "telefone": resultado[3]
-#             }
-#             seguradoras.append(seguradora)
-#         return seguradoras
-
-#     except Exception as e:
-#         conn.rollback()
-#         print("Erro ao buscar seguradoras:", e)
-#         return None
     
 def read_seguradora_por_id(id_seguradora):
     try:
@@ -584,8 +541,7 @@ def read_plano_por_nome(nome_plano):
         conn.rollback()
         print("Erro ao buscar plano:", e)
         return None
-    
-    
+     
 def read_bem_por_id(id_bem):
     try:
         cursor.execute("""
@@ -620,8 +576,8 @@ def read_bem_por_id(id_bem):
         print("Erro ao buscar bem:", e)
         return None
 
-#                  UPDATE                   #
 
+#                  UPDATE                   #
 
 def update_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
     # Atualiza os dados do cliente pelo CPF de forma parcial
@@ -662,7 +618,6 @@ def update_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
         print("Erro ao atualizar pessoa:", e)
         return False
 
-
 def update_apolice(id_apolice, inicio, fim):
     # Atualiza as datas de início e fim de uma apólice pelo ID
     try:
@@ -681,7 +636,6 @@ def update_apolice(id_apolice, inicio, fim):
         conn.rollback()
         print("Erro ao atualizar apólice:", e)
         return False
-
 
 def update_cotacao(id_cotacao, id_pessoa, id_seguradora, id_plano, valor, data):
     # Atualiza os dados de uma cotação pelo ID
@@ -768,7 +722,6 @@ def update_bem(id_bem, id_pessoa, tipo_bem, descricao_bem, valor_estimado):
 
 #                  DELETE                   #
 
-
 def delete_pessoa(cpf):
     # Remove um cliente pelo CPF
     # Retorna True se removeu, False se o CPF não existia
@@ -788,7 +741,6 @@ def delete_pessoa(cpf):
         print("Erro ao deletar pessoa:", e)
         return False
 
-
 def delete_apolice(id_apolice):
     # Remove uma apólice pelo ID
     try:
@@ -807,7 +759,6 @@ def delete_apolice(id_apolice):
         print("Erro ao deletar apólice:", e)
         return False
 
-
 def delete_cotacao(id_cotacao):
     # Remove uma cotação pelo ID
     try:
@@ -825,7 +776,6 @@ def delete_cotacao(id_cotacao):
         conn.rollback()
         print("Erro ao deletar cotação:", e)
         return False
-
 
 def delete_seguradora(id_seguradora):
     # Remove uma seguradora pelo ID
@@ -882,27 +832,35 @@ def delete_bem(id_bem):
         return False
 
 
-    
-
-## Funções para busca baseada no Indicadores do BI ##
-
 ## LISTAGEM GERAL DE CADA ITEM DA NAVEGAÇÃO PARA EXIBIÇÃO NAS TELAS DE ATUALIZAR E REMOVER
 
 def listagem_geral_pessoas():
     try:
         cursor.execute("""
-                        SELECT 
-                            id_pessoa AS id,
-                            nome_completo AS nome
-                        FROM pessoa
-                        ORDER BY id_pessoa;
+                        SELECT
+                            id_pessoa,
+                            cpf_cnpj,
+                            nome_completo,
+                            email,
+                            sexo,
+                            telefone,
+                            data_nascimento,
+                            status
+                        FROM pessoa;
+                        ORDER BY nome_completo;
                     """)
         resultados = cursor.fetchall()
         pessoas = []
         for resultado in resultados:
             pessoa = {
-                "id": resultado[0],
-                "nome": resultado[1]
+                "id_pessoa": resultado[0],
+                "cpf_cnpj": resultado[1],
+                "nome_completo": resultado[2],
+                "email": resultado[3],
+                "sexo": resultado[4],
+                "telefone": resultado[5],
+                "data_nascimento": resultado[6],
+                "status": resultado[7]
             }
             pessoas.append(pessoa)
         return pessoas
@@ -915,18 +873,21 @@ def listagem_geral_pessoas():
 def listagem_geral_seguradoras():
     try:
         cursor.execute("""
-                        SELECT 
-                            id_seguradora AS id,
-                            nome_fantasia AS nome
-                        FROM seguradora
-                        ORDER BY id_seguradora;
+                        SELECT
+                            id_seguradora,
+                            nome_fantasia,
+                            cnpj,
+                            telefone_suporte
+                        FROM seguradora;
                     """)
         resultados = cursor.fetchall()
         seguradoras = []
         for resultado in resultados:
             seguradora = {
-                "id": resultado[0],
-                "nome": resultado[1]
+                "id_seguradora": resultado[0],
+                "nome_fantasia": resultado[1],
+                "cnpj": resultado[2],
+                "telefone_suporte": resultado[3]
             }
             seguradoras.append(seguradora)
         return seguradoras
@@ -939,18 +900,24 @@ def listagem_geral_seguradoras():
 def listagem_geral_planos():
     try:
         cursor.execute("""
-                        SELECT 
-                            id_plano AS id,
-                            nome_plano AS nome
-                        FROM plano
-                        ORDER BY id_plano;
+                        SELECT
+                            p.id_plano as id_plano,
+                            s.id_seguradora || ' - ' || s.nome_fantasia AS seguradora,
+                            p.tipo_cobertura as cobertura,
+                            p.nome_plano as plano
+                        FROM plano p
+                        JOIN seguradora s
+                            USING(id_seguradora)
+                        ORDER BY p.id_plano;
                     """)
         resultados = cursor.fetchall()
         planos = []
         for resultado in resultados:
             plano = {
-                "id": resultado[0],
-                "nome": resultado[1]
+                "id_plano": resultado[0],
+                "seguradora": resultado[1],
+                "cobertura": resultado[2],
+                "plano": resultado[3]
             }
             planos.append(plano)
         return planos
@@ -962,19 +929,27 @@ def listagem_geral_planos():
     
 def listagem_geral_bens():
     try:
-        cursor.execute("""
-                        SELECT 
-                            id_bem AS id,
-                            descricao_bem AS nome
-                        FROM bem
-                        ORDER BY id_bem;
+        cursor.execute(
+            """
+                SELECT
+                    b.id_bem as id_bem,
+                    p.id_pessoa || ' - ' || p.nome_completo AS pessoa,
+                    b.tipo_bem as tipo_bem,
+                    b.descricao_bem as descricao_bem,
+                    b.valor_estimado as valor_estimado
+                FROM bens b
+                JOIN pessoa p
+                    USING(id_pessoa);
                     """)
         resultados = cursor.fetchall()
         bens = []
         for resultado in resultados:
             bem = {
-                "id": resultado[0],
-                "nome": resultado[1]
+                "id_bem": resultado[0],
+                "pessoa": resultado[1],
+                "tipo_bem": resultado[2],
+                "descricao_bem": resultado[3],
+                "valor_estimado": resultado[4]
             }
             bens.append(bem)
         return bens
@@ -986,20 +961,35 @@ def listagem_geral_bens():
     
 def listagem_geral_cotacoes():
     try:
-        cursor.execute("""
-                        SELECT 
-                            id_cotacao AS id,
-                            id_pessoa || ' - ' || nome_completo AS nome
-                        FROM cotacoes
-                        JOIN pessoa USING(id_pessoa)
-                        ORDER BY id_cotacao;
-                    """)
+        cursor.execute(
+                    """
+                    SELECT
+                        c.id_cotacao as id_cotacao,
+                        p.id_pessoa || ' - ' || p.nome_completo AS pessoa,
+                        s.id_seguradora || ' - ' || s.nome_fantasia AS seguradora,
+                        pl.id_plano || ' - ' || pl.nome_plano AS plano,
+                        c.valor_cotacao as valor_cotacao,
+                        c.data_cotacao as data_cotacao,
+                        c.status_cotacao as status_cotacao
+                    FROM cotacoes c
+                    JOIN pessoa p
+                        ON p.id_pessoa = c.id_pessoa
+                    JOIN seguradora s
+                        ON s.id_seguradora = c.id_seguradora
+                    JOIN plano pl
+                        ON pl.id_plano = c.id_plano;
+                        """)
         resultados = cursor.fetchall()
         cotacoes = []
         for resultado in resultados:
             cotacao = {
-                "id": resultado[0],
-                "nome": resultado[1]
+                "id_cotacao": resultado[0],
+                "pessoa": resultado[1],
+                "seguradora": resultado[2],
+                "plano": resultado[3],
+                "valor_cotacao": resultado[4],
+                "data_cotacao": resultado[5],
+                "status_cotacao": resultado[6]
             }
             cotacoes.append(cotacao)
         return cotacoes
@@ -1012,20 +1002,25 @@ def listagem_geral_cotacoes():
 def listagem_geral_apolices():
     try:
         cursor.execute("""
-                        SELECT 
-                            id_apolice AS id,
-                            id_cotacao || ' - ' || nome_completo AS nome
-                        FROM apolice
-                        JOIN cotacoes USING(id_cotacao)
-                        JOIN pessoa USING(id_pessoa)
-                        ORDER BY id_apolice;
+                        SELECT
+                            a.id_apolice as id_apolice,
+                            c.id_cotacao || ' - ' || p.nome_completo AS cotacao,
+                            a.inicio as inicio,
+                            a.fim as fim
+                        FROM apolice a
+                        JOIN cotacoes c
+                           USING(id_cotacao)
+                        JOIN pessoa p
+                            USING(id_pessoa)
                     """)
         resultados = cursor.fetchall()
         apolices = []
         for resultado in resultados:
             apolice = {
-                "id": resultado[0],
-                "nome": resultado[1]
+                "id_apolice": resultado[0],
+                "cotacao": resultado[1],
+                "inicio": resultado[2],
+                "fim": resultado[3]
             }
             apolices.append(apolice)
         return apolices
@@ -1034,4 +1029,6 @@ def listagem_geral_apolices():
         conn.rollback()
         print("Erro ao buscar apólices:", e)
         return None
-    
+ 
+   
+## CONSULTAS PARA OS INDICADORES DO BI ##
