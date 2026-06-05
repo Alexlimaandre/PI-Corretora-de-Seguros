@@ -99,6 +99,22 @@ def create_plano(id_seguradora, tipo_cobertura, nome_plano):
         conn.rollback()
         print("Erro ao criar plano:", e)
         return False
+    
+def create_bem(id_pessoa, tipo_bem, descricao_bem, valor_estimado):
+    try:
+        cursor.execute(
+            """INSERT INTO bem (id_pessoa, tipo_bem, descricao_bem, valor_estimado)
+               VALUES (%s, %s, %s, %s)""",
+            (id_pessoa, tipo_bem, descricao_bem, valor_estimado)
+        )
+        conn.commit()
+        print("Bem criado com sucesso!")
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao criar bem:", e)
+        return False
 
 
 #                   READ                    #
@@ -154,10 +170,22 @@ def read_pessoa_por_nome(nome):
     # Busca cliente pelo nome completo (sem diferenciar maiúsculas/minúsculas)
     try:
         cursor.execute(
-            """SELECT cpf_cnpj, nome_completo, email, sexo,
-                      telefone, data_nascimento, status
-               FROM pessoa WHERE LOWER(nome_completo) = LOWER(%s)""",
-            (nome,)
+            """
+            SELECT 
+                id_pessoa,
+                cpf_cnpj,
+                nome_completo, 
+                email,
+                sexo,
+                telefone,
+                data_nascimento,
+                status
+            FROM pessoa 
+            WHERE nome_completo ILIKE %s
+            ORDER BY id_pessoa
+            LIMIT 1;"""
+            ,
+            (f"%{nome}%",)
         )
         resultado = cursor.fetchone()
 
@@ -165,13 +193,14 @@ def read_pessoa_por_nome(nome):
             return None
 
         cliente = {
-            "cpf_cnpj":        resultado[0],
-            "nome_completo":   resultado[1],
-            "email":           resultado[2],
-            "sexo":            resultado[3],
-            "telefone":        resultado[4],
-            "data_nascimento": str(resultado[5]),
-            "status":          resultado[6]
+            "id_pessoa":      resultado[0],
+            "cpf_cnpj":        resultado[1],
+            "nome_completo":   resultado[2],
+            "email":           resultado[3],
+            "sexo":            resultado[4],
+            "telefone":        resultado[5],
+            "data_nascimento": str(resultado[6]),
+            "status":          resultado[7]
         }
         return cliente
 
@@ -185,9 +214,19 @@ def read_pessoa_por_telefone(telefone):
     # Busca cliente pelo número de telefone
     try:
         cursor.execute(
-            """SELECT cpf_cnpj, nome_completo, email, sexo,
-                      telefone, data_nascimento, status
-               FROM pessoa WHERE telefone = %s""",
+            """
+            SELECT 
+                id_pessoa,
+                cpf_cnpj,
+                nome_completo, 
+                email,
+                sexo,
+                telefone,
+                data_nascimento,
+                status
+            FROM pessoa 
+            WHERE telefone = %s;"""
+            ,
             (telefone,)
         )
         resultado = cursor.fetchone()
@@ -196,13 +235,14 @@ def read_pessoa_por_telefone(telefone):
             return None
 
         cliente = {
-            "cpf_cnpj":        resultado[0],
-            "nome_completo":   resultado[1],
-            "email":           resultado[2],
-            "sexo":            resultado[3],
-            "telefone":        resultado[4],
-            "data_nascimento": str(resultado[5]),
-            "status":          resultado[6]
+            "id_pessoa":      resultado[0],
+            "cpf_cnpj":        resultado[1],
+            "nome_completo":   resultado[2],
+            "email":           resultado[3],
+            "sexo":            resultado[4],
+            "telefone":        resultado[5],
+            "data_nascimento": str(resultado[6]),
+            "status":          resultado[7]
         }
         return cliente
 
@@ -216,8 +256,25 @@ def read_apolice(id_apolice):
     # Busca apólice pelo ID — retorna dicionário ou None
     try:
         cursor.execute(
-            """SELECT id_apolice, id_cotacao, inicio, fim
-               FROM apolice WHERE id_apolice = %s""",
+            """SELECT 
+                    a.id_apolice as id_apolice,
+                    a.id_cotacao as id_cotacao,
+                    p.nome_completo AS cliente,
+                    s.nome_fantasia AS seguradora,
+                    pl.nome_plano AS plano,
+                    c.valor_cotacao AS valor,
+                    a.inicio,
+                    a.fim
+                FROM apolice a
+                JOIN cotacoes c 
+                    USING(id_cotacao)
+                JOIN pessoa p 
+                    USING(id_pessoa)
+                JOIN seguradora s 
+                    USING(id_seguradora)
+                JOIN plano pl 
+                    USING(id_plano)
+                WHERE a.id_apolice = %s;""",
             (id_apolice,)
         )
         resultado = cursor.fetchone()
@@ -228,8 +285,12 @@ def read_apolice(id_apolice):
         apolice = {
             "id_apolice": resultado[0],
             "id_cotacao": resultado[1],
-            "inicio":     str(resultado[2]),
-            "fim":        str(resultado[3])
+            "cliente": resultado[2],
+            "seguradora": resultado[3],
+            "plano": resultado[4],
+            "valor": resultado[5],
+            "inicio":     str(resultado[6]),
+            "fim":        str(resultado[7])
         }
         return apolice
 
@@ -243,8 +304,25 @@ def read_apolice_por_cotacao(id_cotacao):
     # Busca apólice pelo ID da cotação vinculada
     try:
         cursor.execute(
-            """SELECT id_apolice, id_cotacao, inicio, fim
-               FROM apolice WHERE id_cotacao = %s""",
+            """SELECT 
+                    a.id_apolice as id_apolice,
+                    c.id_cotacao as id_cotacao,
+                    p.nome_completo AS cliente,
+                    s.nome_fantasia AS seguradora,
+                    pl.nome_plano AS plano,
+                    c.valor_cotacao AS valor,
+                    a.inicio,
+                    a.fim
+                FROM apolice a
+                JOIN cotacoes c 
+                    USING(id_cotacao)
+                JOIN pessoa p 
+                    USING(id_pessoa)
+                JOIN seguradora s 
+                    USING(id_seguradora)
+                JOIN plano pl 
+                    USING(id_plano)
+                WHERE c.id_cotacao = %s;""",
             (id_cotacao,)
         )
         resultado = cursor.fetchone()
@@ -255,8 +333,12 @@ def read_apolice_por_cotacao(id_cotacao):
         apolice = {
             "id_apolice": resultado[0],
             "id_cotacao": resultado[1],
-            "inicio":     str(resultado[2]),
-            "fim":        str(resultado[3])
+            "cliente": resultado[2],
+            "seguradora": resultado[3],
+            "plano": resultado[4],
+            "valor": resultado[5],
+            "inicio":     str(resultado[6]),
+            "fim":        str(resultado[7])
         }
         return apolice
 
@@ -352,33 +434,34 @@ def read_cotacao_por_pessoa(id_pessoa):
         print("Erro ao buscar cotação por pessoa:", e)
         return None
 
-# Seguradoras
-def read_seguradoras():
-    try:
-        cursor.execute("""
-                        SELECT 
-                            id_seguradora AS id,
-                            nome_fantasia AS nome,
-                            cnpj,
-                            telefone_suporte AS telefone
-                        FROM Seguradora
-                    """)
-        resultados = cursor.fetchall()
-        seguradoras = []
-        for resultado in resultados:
-            seguradora = {
-                "id": resultado[0],
-                "nome": resultado[1],
-                "cnpj": resultado[2],
-                "telefone": resultado[3]
-            }
-            seguradoras.append(seguradora)
-        return seguradoras
+# # Seguradoras
+## CONSULTA SEM UTILIDADE
+# def read_seguradoras():
+#     try:
+#         cursor.execute("""
+#                         SELECT 
+#                             id_seguradora AS id,
+#                             nome_fantasia AS nome,
+#                             cnpj,
+#                             telefone_suporte AS telefone
+#                         FROM Seguradora
+#                     """)
+#         resultados = cursor.fetchall()
+#         seguradoras = []
+#         for resultado in resultados:
+#             seguradora = {
+#                 "id": resultado[0],
+#                 "nome": resultado[1],
+#                 "cnpj": resultado[2],
+#                 "telefone": resultado[3]
+#             }
+#             seguradoras.append(seguradora)
+#         return seguradoras
 
-    except Exception as e:
-        conn.rollback()
-        print("Erro ao buscar seguradoras:", e)
-        return None
+#     except Exception as e:
+#         conn.rollback()
+#         print("Erro ao buscar seguradoras:", e)
+#         return None
     
 def read_seguradora_por_id(id_seguradora):
     try:
@@ -500,6 +583,41 @@ def read_plano_por_nome(nome_plano):
     except Exception as e:
         conn.rollback()
         print("Erro ao buscar plano:", e)
+        return None
+    
+    
+def read_bem_por_id(id_bem):
+    try:
+        cursor.execute("""
+            SELECT 
+                b.id_bem as id_bem,
+                b.descricao_bem as descricao_bem,
+                b.tipo_bem as tipo_bem,
+                b.valor_estimado as valor_estimado,
+                p.id_pessoa||' - '||p.nome_completo AS id_nome_pessoa
+            FROM Bens b
+            JOIN pessoa p
+            USING(id_pessoa)
+            WHERE id_bem = %s;
+            """,
+            (id_bem,)
+        )
+        resultado = cursor.fetchone()
+        if resultado is None:
+            return None
+
+        bem = {
+            "id_bem": resultado[0],
+            "descricao_bem": resultado[1],
+            "tipo_bem": resultado[2],
+            "valor_estimado": resultado[3],
+            "id_nome_pessoa": resultado[4]
+        }
+        return bem
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar bem:", e)
         return None
 
 #                  UPDATE                   #
@@ -625,6 +743,27 @@ def update_plano(id_plano, id_seguradora, nome_plano, tipo_cobertura):
         conn.rollback()
         print("Erro ao atualizar plano:", e)
         return False
+    
+def update_bem(id_bem, id_pessoa, tipo_bem, descricao_bem, valor_estimado):
+    # Atualiza os dados de um bem pelo ID
+    try:
+        cursor.execute(
+            """UPDATE bem
+               SET id_pessoa=%s, tipo_bem=%s,
+                   descricao_bem=%s, valor_estimado=%s
+               WHERE id_bem = %s""",
+            (id_pessoa, tipo_bem, descricao_bem, valor_estimado, id_bem)
+        )
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return False
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao atualizar bem:", e)
+        return False
 
 
 #                  DELETE                   #
@@ -724,8 +863,175 @@ def delete_plano(id_plano):
         print("Erro ao deletar plano:", e)
         return False
 
+def delete_bem(id_bem):
+    # Remove um bem pelo ID
+    try:
+        cursor.execute(
+            "DELETE FROM bem WHERE id_bem = %s",
+            (id_bem,)
+        )
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return False
+        return True
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao deletar bem:", e)
+        return False
+
 
     
 
 ## Funções para busca baseada no Indicadores do BI ##
 
+## LISTAGEM GERAL DE CADA ITEM DA NAVEGAÇÃO PARA EXIBIÇÃO NAS TELAS DE ATUALIZAR E REMOVER
+
+def listagem_geral_pessoas():
+    try:
+        cursor.execute("""
+                        SELECT 
+                            id_pessoa AS id,
+                            nome_completo AS nome
+                        FROM pessoa
+                        ORDER BY id_pessoa;
+                    """)
+        resultados = cursor.fetchall()
+        pessoas = []
+        for resultado in resultados:
+            pessoa = {
+                "id": resultado[0],
+                "nome": resultado[1]
+            }
+            pessoas.append(pessoa)
+        return pessoas
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar pessoas:", e)
+        return None
+    
+def listagem_geral_seguradoras():
+    try:
+        cursor.execute("""
+                        SELECT 
+                            id_seguradora AS id,
+                            nome_fantasia AS nome
+                        FROM seguradora
+                        ORDER BY id_seguradora;
+                    """)
+        resultados = cursor.fetchall()
+        seguradoras = []
+        for resultado in resultados:
+            seguradora = {
+                "id": resultado[0],
+                "nome": resultado[1]
+            }
+            seguradoras.append(seguradora)
+        return seguradoras
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar seguradoras:", e)
+        return None
+    
+def listagem_geral_planos():
+    try:
+        cursor.execute("""
+                        SELECT 
+                            id_plano AS id,
+                            nome_plano AS nome
+                        FROM plano
+                        ORDER BY id_plano;
+                    """)
+        resultados = cursor.fetchall()
+        planos = []
+        for resultado in resultados:
+            plano = {
+                "id": resultado[0],
+                "nome": resultado[1]
+            }
+            planos.append(plano)
+        return planos
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar planos:", e)
+        return None
+    
+def listagem_geral_bens():
+    try:
+        cursor.execute("""
+                        SELECT 
+                            id_bem AS id,
+                            descricao_bem AS nome
+                        FROM bem
+                        ORDER BY id_bem;
+                    """)
+        resultados = cursor.fetchall()
+        bens = []
+        for resultado in resultados:
+            bem = {
+                "id": resultado[0],
+                "nome": resultado[1]
+            }
+            bens.append(bem)
+        return bens
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar bens:", e)
+        return None
+    
+def listagem_geral_cotacoes():
+    try:
+        cursor.execute("""
+                        SELECT 
+                            id_cotacao AS id,
+                            id_pessoa || ' - ' || nome_completo AS nome
+                        FROM cotacoes
+                        JOIN pessoa USING(id_pessoa)
+                        ORDER BY id_cotacao;
+                    """)
+        resultados = cursor.fetchall()
+        cotacoes = []
+        for resultado in resultados:
+            cotacao = {
+                "id": resultado[0],
+                "nome": resultado[1]
+            }
+            cotacoes.append(cotacao)
+        return cotacoes
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar cotações:", e)
+        return None
+    
+def listagem_geral_apolices():
+    try:
+        cursor.execute("""
+                        SELECT 
+                            id_apolice AS id,
+                            id_cotacao || ' - ' || nome_completo AS nome
+                        FROM apolice
+                        JOIN cotacoes USING(id_cotacao)
+                        JOIN pessoa USING(id_pessoa)
+                        ORDER BY id_apolice;
+                    """)
+        resultados = cursor.fetchall()
+        apolices = []
+        for resultado in resultados:
+            apolice = {
+                "id": resultado[0],
+                "nome": resultado[1]
+            }
+            apolices.append(apolice)
+        return apolices
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar apólices:", e)
+        return None
+    
