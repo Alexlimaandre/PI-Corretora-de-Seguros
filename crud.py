@@ -1032,3 +1032,71 @@ def listagem_geral_apolices():
  
    
 ## CONSULTAS PARA OS INDICADORES DO BI ##
+def qtd_cliente_por_status(status):
+    try:
+        cursor.execute("""  
+                    SELECT 
+                        status||'(s): '||COUNT(*) AS qtd_status
+                    FROM pessoa
+                    GROUP BY status
+                    HAVING UPPER(status) = 'ATIVO';
+                    """,
+                    (status,)
+        )
+        resultado = cursor.fetchone()
+        if resultado is None:
+            return None
+
+        indicador = {
+            "qtd_status": resultado[1]
+        }
+        return indicador
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar indicador de clientes por status:", e)
+        return None
+    
+def novas_apolices_em_x_dias(dias):
+    try:
+        cursor.execute("""
+                    SELECT 
+                        COUNT(*) AS qtd_novas_apolices
+                    FROM apolice
+                    WHERE inicio >= CURRENT_DATE - INTERVAL '%s' DAY;
+                    """, (dias,))
+        resultado = cursor.fetchone()
+        if resultado is None:
+            return None
+
+        indicador = {
+            "qtd_novas_apolices": resultado[0]
+        }
+        return indicador
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar indicador de novas apólices:", e)
+        return None
+    
+def orcamentos_feitos_em_x_dias(dias):
+    try:
+        cursor.execute("""
+                    SELECT 
+                        COUNT(*) AS qtd_orcamentos
+                    FROM cotacoes
+                    WHERE data_cotacao >= CURRENT_DATE - INTERVAL '%s' DAY;
+                    """, (dias,))
+        resultado = cursor.fetchone()
+        if resultado is None:
+            return None
+
+        indicador = {
+            "qtd_orcamentos": resultado[0]
+        }
+        return indicador
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar indicador de orçamentos feitos:", e)
+        return None
