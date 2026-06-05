@@ -240,6 +240,7 @@ def confirma_crud():
             if cliente:
                 mensagem_alerta = (
                     f"Cliente encontrado!\n\n"
+                    f"ID: {cliente['id_pessoa']}\n"
                     f"CPF/CNPJ: {cliente['cpf_cnpj']}\n"
                     f"Nome: {cliente['nome_completo']}\n"
                     f"Email: {cliente['email']}\n"
@@ -415,10 +416,10 @@ def confirma_crud():
                 mensagem_alerta = (
                     f"Bem encontrado!\n\n"
                     f"ID Bem: {bem['id_bem']}\n"
-                    f"ID Pessoa: {bem['id_pessoa']}\n"
-                    f"Tipo: {bem['tipo_bem']}\n"
                     f"Descrição: {bem['descricao_bem']}\n"
+                    f"Tipo: {bem['tipo_bem']}\n"
                     f"Valor Estimado: R$ {bem['valor_estimado']}"
+                    f"ID e Nome da Pessoa: {bem['id_nome_pessoa']}\n"
                 )
             else:
                 label_erro_crud.configure(text="Nenhum bem localizado!", text_color="#e74c3c")
@@ -467,6 +468,10 @@ def confirma_crud():
                     f"Apólice localizada!\n\n"
                     f"ID Apólice: {apolice['id_apolice']}\n"
                     f"ID Cotação: {apolice['id_cotacao']}\n"
+                    f"Cliente: {apolice['cliente']}\n"
+                    f"Seguradora: {apolice['seguradora']}\n"
+                    f"Plano: {apolice['plano']}\n"
+                    f"Valor: R$ {apolice['valor']}\n"
                     f"Início Vigência: {apolice['inicio']}\n"
                     f"Fim Vigência: {apolice['fim']}"
                 )

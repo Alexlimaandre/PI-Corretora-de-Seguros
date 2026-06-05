@@ -1,5 +1,6 @@
-CREATE DATABASE Frank_Costa;
+SET DATESTYLE TO POSTGRES, DMY ;
 
+DROP TABLE IF EXISTS Pessoa CASCADE ;
 CREATE TABLE Pessoa (
                         id_pessoa SERIAL PRIMARY KEY,
                         cpf_cnpj VARCHAR(14) NOT NULL,
@@ -11,8 +12,7 @@ CREATE TABLE Pessoa (
                         status VARCHAR(10) NOT NULL
 );
 
-SELECT id_pessoa, nome_completo, email, sexo, telefone, TO_CHAR(data_nascimento, 'DD/MM/YYYY') AS data_nascimento, status FROM Pessoa;
-
+DROP TABLE IF EXISTS Bens CASCADE ;
 CREATE TABLE Bens (
                       id_bem SERIAL PRIMARY KEY,
                       id_pessoa INT NOT NULL,
@@ -22,6 +22,7 @@ CREATE TABLE Bens (
                       FOREIGN KEY (id_pessoa) REFERENCES Pessoa(id_pessoa)
 );
 
+DROP TABLE IF EXISTS Seguradora CASCADE ;
 CREATE TABLE Seguradora (
                             id_seguradora SERIAL PRIMARY KEY,
                             nome_fantasia VARCHAR(100),
@@ -29,6 +30,7 @@ CREATE TABLE Seguradora (
                             telefone_suporte VARCHAR(11) NOT NULL
 );
 
+DROP TABLE IF EXISTS Plano CASCADE ;
 CREATE TABLE Plano (
                        id_plano SERIAL PRIMARY KEY,
                        id_seguradora INT,
@@ -37,6 +39,7 @@ CREATE TABLE Plano (
                        FOREIGN KEY (id_seguradora) REFERENCES Seguradora(id_seguradora)
 );
 
+DROP TABLE IF EXISTS Cotacoes CASCADE ;
 CREATE TABLE Cotacoes (
                           id_cotacao SERIAL PRIMARY KEY,
                           id_pessoa INT,
@@ -49,6 +52,7 @@ CREATE TABLE Cotacoes (
                           FOREIGN KEY (id_plano) REFERENCES Plano(id_plano)
 );
 
+DROP TABLE IF EXISTS Apolice CASCADE ;
 CREATE TABLE Apolice (
                          id_apolice SERIAL PRIMARY KEY,
                          id_cotacao INT,
@@ -57,7 +61,7 @@ CREATE TABLE Apolice (
                          FOREIGN KEY (id_cotacao) REFERENCES Cotacoes(id_cotacao)
 );
 
-ALTER TABLE Cotacao ADD COLUMN status_cotacao VARCHAR(20) DEFAULT 'Pendente';
+ALTER TABLE Cotacoes ADD COLUMN status_cotacao VARCHAR(20) DEFAULT 'Pendente';
 
 -----Trigger------
 CREATE OR REPLACE FUNCTION fn_gerar_apolice_automatica()
@@ -66,16 +70,12 @@ BEGIN
     IF NEW.status_cotacao = 'Aprovada' AND OLD.status_cotacao <> 'Aprovada' THEN
         INSERT INTO Apolice (
             id_cotacao,
-            numero_apolice_seguradora,
             inicio,
-            fim,
-            status_apolice
+            fim
         ) VALUES (
             NEW.id_cotacao, 
-            'PENDENTE-' || NEW.id_cotacao, 
             CURRENT_DATE,                  
-            CURRENT_DATE + INTERVAL '1 year', 
-            'Ativa'                        
+            CURRENT_DATE + INTERVAL '1 year'                      
         );
     END IF;
     RETURN NEW;
