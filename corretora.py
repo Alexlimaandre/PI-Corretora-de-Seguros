@@ -250,9 +250,9 @@ def confirma_crud():
                 cliente = crud.read_pessoa_por_telefone(v5)
 
             if cliente:
+                # Monta o texto com os dados encontrados para exibir na tela (inline)
                 mensagem_alerta = (
                     f"Cliente encontrado!\n\n"
-                    f"ID: {cliente['id_pessoa']}\n"
                     f"CPF/CNPJ: {cliente['cpf_cnpj']}\n"
                     f"Nome: {cliente['nome_completo']}\n"
                     f"Email: {cliente['email']}\n"
@@ -262,6 +262,7 @@ def confirma_crud():
                     f"Status: {cliente['status']}"
                 )
             else:
+                # Se não encontrar, define a mensagem de erro que será exibida inline
                 label_erro_crud.configure(text="Nenhum cliente localizado!", text_color="#e74c3c")
                 return
 
