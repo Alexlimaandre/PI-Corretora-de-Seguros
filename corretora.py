@@ -664,54 +664,56 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl5, placeholder5, validador5 = "Vigência Fim:", "Formato DD/MM/AAAA", None
 
     # Geração dos widgets com base nas definições dinâmicas acima
+    # Geração dos widgets com base nas definições dinâmicas acima
+    # Ajustado anchor para "center" e removido o padx fixo para alinhar com o Entry
     if lbl1:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl1, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
+        ctk.CTkLabel(frame_zona_inputs, text=lbl1, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
         campo1_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder1, width=340, height=30)
         if validador1:
             campo1_ativo.configure(validate="key", validatecommand=(validador1, "%P"))
-        campo1_ativo.pack(pady=(2, 4))
+        campo1_ativo.pack(pady=(2, 8))
 
     if lbl2:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl2, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
+        ctk.CTkLabel(frame_zona_inputs, text=lbl2, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
         campo2_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder2, width=340, height=30)
         if validador2:
             campo2_ativo.configure(validate="key", validatecommand=(validador2, "%P"))
-        campo2_ativo.pack(pady=(2, 4))
+        campo2_ativo.pack(pady=(2, 8))
 
     if lbl3:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl3, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
+        ctk.CTkLabel(frame_zona_inputs, text=lbl3, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
         campo3_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder3, width=340, height=30)
         if validador3:
             campo3_ativo.configure(validate="key", validatecommand=(validador3, "%P"))
-        campo3_ativo.pack(pady=(2, 4))
+        campo3_ativo.pack(pady=(2, 8))
 
     if lbl4:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl4, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
+        ctk.CTkLabel(frame_zona_inputs, text=lbl4, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
         campo4_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder4, width=340, height=30)
         if validador4:
             campo4_ativo.configure(validate="key", validatecommand=(validador4, "%P"))
-        campo4_ativo.pack(pady=(2, 4))
+        campo4_ativo.pack(pady=(2, 8))
 
     if lbl5:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl5, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
+        ctk.CTkLabel(frame_zona_inputs, text=lbl5, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
         campo5_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder5, width=340, height=30)
         if validador5:
             campo5_ativo.configure(validate="key", validatecommand=(validador5, "%P"))
-        campo5_ativo.pack(pady=(2, 4))
+        campo5_ativo.pack(pady=(2, 8))
 
     if lbl6:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl6, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
+        ctk.CTkLabel(frame_zona_inputs, text=lbl6, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
         campo6_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder6, width=340, height=30)
         if validador6:
             campo6_ativo.configure(validate="key", validatecommand=(validador6, "%P"))
-        campo6_ativo.pack(pady=(2, 4))
+        campo6_ativo.pack(pady=(2, 8))
 
     if lbl7:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl7, font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(2, 0))
+        ctk.CTkLabel(frame_zona_inputs, text=lbl7, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
         campo7_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder7, width=340, height=30)
         if validador7:
             campo7_ativo.configure(validate="key", validatecommand=(validador7, "%P"))
-        campo7_ativo.pack(pady=(2, 4))
+        campo7_ativo.pack(pady=(2, 8))
 
     # ---- Botão de confirmação ----
     ctk.CTkButton(
