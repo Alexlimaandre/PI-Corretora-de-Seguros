@@ -846,7 +846,7 @@ def listagem_geral_pessoas():
                             telefone,
                             data_nascimento,
                             status
-                        FROM pessoa;
+                        FROM pessoa
                         ORDER BY nome_completo;
                     """)
         resultados = cursor.fetchall()
