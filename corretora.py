@@ -6,12 +6,30 @@ import customtkinter as ctk                # biblioteca para interface gráfica 
 from config import USUARIO, SENHA          # credenciais de login do arquivo config.py
 import crud                                # funções de acesso ao banco de dados
 
-ctk.set_appearance_mode("dark")            # tema escuro
-ctk.set_default_color_theme("blue")        # cor padrão dos botões
+ctk.set_appearance_mode("light")           # identidade visual clara e corporativa
+ctk.set_default_color_theme("green")       # base verde para a identidade visual
+
+# ============= IDENTIDADE VISUAL FRANK COSTA =============
+VERDE_INSTITUCIONAL = "#0F7B4D"
+VERDE_ESCURO        = "#075E3A"
+VERDE_CLARO         = "#34C759"
+BRANCO              = "#FFFFFF"
+CINZA_CLARO         = "#F5F7FA"
+CINZA_ESCURO        = "#2D3748"
+DOURADO_PREMIUM     = "#D4AF37"
+VERMELHO_ERRO       = "#C53030"
+VERMELHO_HOVER      = "#9B2C2C"
+BORDA_SUAVE         = "#D9E2EC"
+TEXTO_SECUNDARIO    = "#718096"
+FUNDO_CARD          = "#FFFFFF"
+
+FONTE_TITULO = "Montserrat"
+FONTE_PADRAO = "Inter"
 
 janela = ctk.CTk()                         # janela principal do sistema
 janela.title("Corretora de Seguros")       # título da janela
-janela.geometry("850x650")                 # tamanho da janela
+janela.geometry("980x720")                 # tamanho da janela
+janela.configure(fg_color=CINZA_CLARO)      # fundo geral corporativo
 
 # ========== FUNÇÕES DE LIMITE DE TAMANHO =============
 
@@ -56,7 +74,7 @@ def login():                                                    # define a funç
         frame_lateral.pack(side="left", fill="y")               # exibe o menu lateral fixo
         mostrar_tela_clientes()                                 # exibe a seção de clientes por padrão
     else:
-        label_erro.configure(text="Usuário ou senha incorretos!", text_color="red")
+        label_erro.configure(text="Usuário ou senha incorretos!", text_color=VERMELHO_ERRO)
 
 def login_entrar(event):                                        # dispara o login com a tecla Enter
     login()
@@ -64,38 +82,40 @@ def login_entrar(event):                                        # dispara o logi
 
 # ============= PAINEL DE LOGIN =============
 
-frame_login = ctk.CTkFrame(master=janela)
-frame_login.pack(pady=20, padx=40, fill="both", expand=True)
+frame_login = ctk.CTkFrame(master=janela, fg_color=FUNDO_CARD, corner_radius=22, border_width=1, border_color=BORDA_SUAVE)
+frame_login.pack(pady=45, padx=90, fill="both", expand=True)
 
-ctk.CTkLabel(frame_login, text=" Corretora de Valores ", text_color="green", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(24, 4))
-ctk.CTkLabel(frame_login, text="Informe seu LOGIN para continuar", font=ctk.CTkFont(size=12), text_color="white").pack(pady=(0, 16))
+ctk.CTkLabel(frame_login, text="Frank Costa", text_color=VERDE_INSTITUCIONAL, font=ctk.CTkFont(family=FONTE_TITULO, size=32, weight="bold")).pack(pady=(44, 2))
+ctk.CTkLabel(frame_login, text="Corretora de Seguros", text_color=DOURADO_PREMIUM, font=ctk.CTkFont(family=FONTE_PADRAO, size=15, weight="bold")).pack(pady=(0, 12))
+ctk.CTkLabel(frame_login, text="Acesse o sistema administrativo", font=ctk.CTkFont(family=FONTE_PADRAO, size=13), text_color=CINZA_ESCURO).pack(pady=(0, 22))
 
-entry_user = ctk.CTkEntry(frame_login, placeholder_text="LOGIN", width=260, height=40)
+entry_user = ctk.CTkEntry(frame_login, placeholder_text="LOGIN", width=300, height=44, corner_radius=12, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
 entry_user.pack(pady=8)
 
-entry_pass = ctk.CTkEntry(frame_login, placeholder_text="Senha", show="*", width=260, height=40)
+entry_pass = ctk.CTkEntry(frame_login, placeholder_text="Senha", show="*", width=300, height=44, corner_radius=12, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
 entry_pass.pack(pady=8)
 
 label_erro = ctk.CTkLabel(frame_login, text="", font=ctk.CTkFont(size=12))
 label_erro.pack(pady=(4, 0))
 
-ctk.CTkButton(frame_login, text="Entrar", command=login, width=260, height=40, font=ctk.CTkFont(size=14, weight="bold"), fg_color="green", hover_color="darkgreen").pack(pady=16)
+ctk.CTkButton(frame_login, text="Entrar", command=login, width=300, height=44, corner_radius=12, font=ctk.CTkFont(family=FONTE_PADRAO, size=14, weight="bold"), fg_color=VERDE_INSTITUCIONAL, hover_color=VERDE_ESCURO, text_color=BRANCO).pack(pady=18)
 
 janela.bind("<Return>", login_entrar)                           # tecla Enter também aciona o login
 
 
 # ============= PAINEL MENU PRINCIPAL =============
 
-frame_menu = ctk.CTkFrame(master=janela)                        # cria o painel do menu principal
+frame_menu = ctk.CTkFrame(master=janela, fg_color=CINZA_CLARO)                        # cria o painel do menu principal
 
 
 # ============= BARRA SUPERIOR =============
 
-frame_topbar = ctk.CTkFrame(frame_menu, height=45, corner_radius=0, fg_color="#1a1a2e")
+frame_topbar = ctk.CTkFrame(frame_menu, height=58, corner_radius=0, fg_color=VERDE_INSTITUCIONAL)
 frame_topbar.pack(side="top", fill="x")
 frame_topbar.pack_propagate(False)
 
-ctk.CTkLabel(frame_topbar, text=" Corretora de Seguros - Sistema Interno", font=ctk.CTkFont(size=15, weight="bold"), text_color="white").pack(side="left", padx=20)
+ctk.CTkLabel(frame_topbar, text=" Frank Costa Corretora de Seguros", font=ctk.CTkFont(family=FONTE_TITULO, size=17, weight="bold"), text_color=BRANCO).pack(side="left", padx=22)
+ctk.CTkLabel(frame_topbar, text="Sistema de Gestão Comercial", font=ctk.CTkFont(family=FONTE_PADRAO, size=12), text_color="#E6FFFA").pack(side="right", padx=22)
 
 
 # ============= FUNÇÃO SAIR =============
@@ -110,21 +130,21 @@ def fechar_login():                                             # fecha o menu e
 
 # ============= PAINEL CENTRAL =============
 
-frame_centro = ctk.CTkFrame(frame_menu, fg_color="transparent")
+frame_centro = ctk.CTkFrame(frame_menu, fg_color=CINZA_CLARO)
 frame_centro.pack(fill="both", expand=True)
 
 
 # ============= MENU LATERAL =============
 
-frame_lateral = ctk.CTkFrame(frame_centro, width=180, corner_radius=0, fg_color="#16213e")
+frame_lateral = ctk.CTkFrame(frame_centro, width=205, corner_radius=0, fg_color=VERDE_ESCURO)
 frame_lateral.pack_propagate(False)
 
-ctk.CTkLabel(frame_lateral, text="NAVEGAÇÃO", font=ctk.CTkFont(size=12, weight="bold"), text_color="gray").pack(pady=(20, 10), padx=12, anchor="w")
+ctk.CTkLabel(frame_lateral, text="MENU PRINCIPAL", font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color="#C6F6D5").pack(pady=(24, 14), padx=16, anchor="w")
 
 
 # ============= PAINEL DE CONTEÚDO =============
 
-frame_conteudo = ctk.CTkFrame(frame_centro, fg_color="transparent")
+frame_conteudo = ctk.CTkFrame(frame_centro, fg_color=CINZA_CLARO)
 frame_conteudo.pack(side="right", fill="both", expand=True)
 
 
@@ -174,11 +194,14 @@ def data_banco_para_br(data_banco):
 
 # ============= FUNÇÃO DE MENSAGEM INLINE =============
 
-def mostrar_mensagem_inline(mensagem, cor="green"):
+def mostrar_mensagem_inline(mensagem, cor=VERDE_INSTITUCIONAL):
     """Exibe mensagem de resultado diretamente no painel, abaixo do formulário."""
     global label_mensagem
     if label_mensagem:
-        label_mensagem.configure(text=mensagem, text_color=cor)
+        if mensagem:
+            label_mensagem.configure(text=mensagem, text_color=cor, fg_color=BRANCO, corner_radius=14)
+        else:
+            label_mensagem.configure(text="", fg_color="transparent")
 
 
 # ============= FUNÇÕES DE CLIQUE PARA OS BOTÕES DE B.I. =============
@@ -221,22 +244,22 @@ def confirma_crud():
            (campo3_ativo and not v3) or (campo4_ativo and not v4) or \
            (campo5_ativo and not v5) or (campo6_ativo and not v6) or \
            (campo7_ativo and not v7):
-            label_erro_crud.configure(text="Preencha todos os campos do formulário para acrescentar!", text_color="#e74c3c")
+            label_erro_crud.configure(text="Preencha todos os campos do formulário para acrescentar!", text_color=VERMELHO_ERRO)
             return
 
     elif chamar_acao == "Atualizar":                            # apenas o identificador (campo 1) é estritamente obrigatório
         if not v1:
-            label_erro_crud.configure(text="Preencha o campo identificador obrigatório para atualizar!", text_color="#e74c3c")
+            label_erro_crud.configure(text="Preencha o campo identificador obrigatório para atualizar!", text_color=VERMELHO_ERRO)
             return
 
     elif chamar_acao == "Pesquisar":                            # pelo menos um campo deve ser preenchido
         if not v1 and not v2 and not v3 and not v4 and not v5:
-            label_erro_crud.configure(text="Preencha pelo menos um campo para buscar!", text_color="#e74c3c")
+            label_erro_crud.configure(text="Preencha pelo menos um campo para buscar!", text_color=VERMELHO_ERRO)
             return
 
     elif chamar_acao == "Remover":                              # campo 1 obrigatório para remover
         if not v1:
-            label_erro_crud.configure(text="Informe o campo de identificação para localizar o registro.", text_color="#e74c3c")
+            label_erro_crud.configure(text="Informe o campo de identificação para localizar o registro.", text_color=VERMELHO_ERRO)
             return
 
     mensagem_alerta = ""
@@ -252,7 +275,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Cliente adicionado com sucesso!"
             else:
-                label_erro_crud.configure(text="Erro ao salvar no banco. Verifique os dados.", text_color="#e74c3c")
+                label_erro_crud.configure(text="Erro ao salvar no banco. Verifique os dados.", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Pesquisar":
@@ -285,7 +308,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Dados do cliente atualizados com sucesso!"
             else:
-                label_erro_crud.configure(text="CPF/CNPJ não encontrado ou erro na atualização!", text_color="#e74c3c")
+                label_erro_crud.configure(text="CPF/CNPJ não encontrado ou erro na atualização!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Remover":
@@ -293,7 +316,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Cliente removido com sucesso!"
             else:
-                label_erro_crud.configure(text="Erro ao remover ou cliente não encontrado.", text_color="#e74c3c")
+                label_erro_crud.configure(text="Erro ao remover ou cliente não encontrado.", text_color=VERMELHO_ERRO)
                 return
 
 
@@ -306,7 +329,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Seguradora adicionada com sucesso!"
             else:
-                label_erro_crud.configure(text="Erro ao salvar seguradora no banco.", text_color="#e74c3c")
+                label_erro_crud.configure(text="Erro ao salvar seguradora no banco.", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Pesquisar":
@@ -325,7 +348,7 @@ def confirma_crud():
                     f"Telefone Suporte: {seguradoras['telefone']}"
                 )
             else:
-                label_erro_crud.configure(text="Nenhuma seguradora localizada!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nenhuma seguradora localizada!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Atualizar":
@@ -333,7 +356,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Seguradora atualizada com sucesso!"
             else:
-                label_erro_crud.configure(text="ID de seguradora não encontrado!", text_color="#e74c3c")
+                label_erro_crud.configure(text="ID de seguradora não encontrado!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Remover":
@@ -341,7 +364,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Seguradora removida com sucesso!"
             else:
-                label_erro_crud.configure(text="Nenhuma seguradora encontrada para remoção!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nenhuma seguradora encontrada para remoção!", text_color=VERMELHO_ERRO)
                 return
 
 
@@ -354,7 +377,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Plano cadastrado com sucesso!"
             else:
-                label_erro_crud.configure(text="Erro ao salvar plano no banco.", text_color="#e74c3c")
+                label_erro_crud.configure(text="Erro ao salvar plano no banco.", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Pesquisar":
@@ -373,7 +396,7 @@ def confirma_crud():
                     f"Tipo Cobertura: {plano['tipo_cobertura']}"
                 )
             else:
-                label_erro_crud.configure(text="Nenhum plano localizado!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nenhum plano localizado!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Atualizar":
@@ -381,7 +404,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Plano atualizado com sucesso!"
             else:
-                label_erro_crud.configure(text="ID de plano não encontrado!", text_color="#e74c3c")
+                label_erro_crud.configure(text="ID de plano não encontrado!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Remover":
@@ -389,7 +412,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Plano removido com sucesso!"
             else:
-                label_erro_crud.configure(text="Nenhum plano encontrado para remoção!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nenhum plano encontrado para remoção!", text_color=VERMELHO_ERRO)
                 return
 
 
@@ -402,7 +425,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Bem adicionado com sucesso!"
             else:
-                label_erro_crud.configure(text="Erro ao salvar bem no banco.", text_color="#e74c3c")
+                label_erro_crud.configure(text="Erro ao salvar bem no banco.", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Pesquisar":
@@ -411,13 +434,12 @@ def confirma_crud():
                 mensagem_alerta = (
                     f"Bem encontrado!\n\n"
                     f"ID Bem: {bem['id_bem']}\n"
-                    f"ID Pessoa: {bem['id_pessoa']}\n"
                     f"Tipo do Bem: {bem['tipo_bem']}\n"
                     f"Descrição: {bem['descricao']}\n"
                     f"Valor Estimado: R$ {bem['valor_estimado']}"
                 )
             else:
-                label_erro_crud.configure(text="Nenhum bem localizado!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nenhum bem localizado!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Atualizar":
@@ -425,7 +447,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Bem atualizado com sucesso!"
             else:
-                label_erro_crud.configure(text="ID do bem não encontrado!", text_color="#e74c3c")
+                label_erro_crud.configure(text="ID do bem não encontrado!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Remover":
@@ -433,7 +455,7 @@ def confirma_crud():
             if  sucesso:
                 mensagem_alerta = "Bem removido com sucesso!"
             else:
-                label_erro_crud.configure(text="Nenhum bem encontrado para exclusão!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nenhum bem encontrado para exclusão!", text_color=VERMELHO_ERRO)
                 return
 
 
@@ -446,7 +468,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Apólice registrada com sucesso!"
             else:
-                label_erro_crud.configure(text="Erro ao criar apólice. Verifique os dados.", text_color="#e74c3c")
+                label_erro_crud.configure(text="Erro ao criar apólice. Verifique os dados.", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Pesquisar":
@@ -461,7 +483,7 @@ def confirma_crud():
                     f"Prêmio: R$ {apolice['valor_premio']}"
                 )
             else:
-                label_erro_crud.configure(text="Apólice não localizada!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Apólice não localizada!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Atualizar":
@@ -469,7 +491,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Apólice modificada com sucesso!"
             else:
-                label_erro_crud.configure(text="Nº de apólice não cadastrado!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nº de apólice não cadastrado!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Remover":
@@ -477,7 +499,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Apólice removida do sistema com sucesso!"
             else:
-                label_erro_crud.configure(text="Erro ao deletar ou apólice não existente.", text_color="#e74c3c")
+                label_erro_crud.configure(text="Erro ao deletar ou apólice não existente.", text_color=VERMELHO_ERRO)
                 return
 
 
@@ -492,7 +514,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Venda concluída com sucesso!"
             else:
-                label_erro_crud.configure(text="Erro ao registrar venda.", text_color="#e74c3c")
+                label_erro_crud.configure(text="Erro ao registrar venda.", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Pesquisar":
@@ -507,7 +529,7 @@ def confirma_crud():
                     f"Vigência Fim: {data_banco_para_br(venda['data_vigencia_fim'])}"
                 )
             else:
-                label_erro_crud.configure(text="ID de venda inexistente!", text_color="#e74c3c")
+                label_erro_crud.configure(text="ID de venda inexistente!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Atualizar":
@@ -517,7 +539,7 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Informações da venda atualizadas!"
             else:
-                label_erro_crud.configure(text="ID da venda não localizado!", text_color="#e74c3c")
+                label_erro_crud.configure(text="ID da venda não localizado!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Remover":
@@ -525,11 +547,11 @@ def confirma_crud():
             if sucesso:
                 mensagem_alerta = "Venda removida com sucesso!"
             else:
-                label_erro_crud.configure(text="Nenhum registro de venda correspondente para remover.", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nenhum registro de venda correspondente para remover.", text_color=VERMELHO_ERRO)
                 return
 
     # Exibe a mensagem de sucesso inline diretamente na tela sem pop-up externo
-    mostrar_mensagem_inline(mensagem_alerta, "white")
+    mostrar_mensagem_inline(mensagem_alerta, "VERDE")
 
 
 # ====== === CONSTRUÇÃO DINÂMICA DOS CAMPOS DO FORMULÁRIO    =========
@@ -548,8 +570,8 @@ def gerar_campos_formulario(acao, nome_secao):
     ctk.CTkLabel(
         frame_zona_inputs, 
         text=f"Formulário para: {acao} {nome_secao[:-1]}", 
-        font=ctk.CTkFont(size=14, weight="bold"), 
-        text_color="#3498db"
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=15, weight="bold"), 
+        text_color=VERDE_INSTITUCIONAL
     ).pack(pady=(0, 15))
 
     # Variáveis locais para configuração dinâmica das Labels e Placeholders
@@ -678,50 +700,50 @@ def gerar_campos_formulario(acao, nome_secao):
     # Geração dos widgets com base nas definições dinâmicas acima
   
     if lbl1:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl1, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
-        campo1_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder1, width=340, height=30)
+        ctk.CTkLabel(frame_zona_inputs, text=lbl1, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
+        campo1_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder1, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador1:
             campo1_ativo.configure(validate="key", validatecommand=(validador1, "%P"))
         campo1_ativo.pack(pady=(2, 8))
 
     if lbl2:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl2, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
-        campo2_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder2, width=340, height=30)
+        ctk.CTkLabel(frame_zona_inputs, text=lbl2, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
+        campo2_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder2, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador2:
             campo2_ativo.configure(validate="key", validatecommand=(validador2, "%P"))
         campo2_ativo.pack(pady=(2, 8))
 
     if lbl3:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl3, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
-        campo3_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder3, width=340, height=30)
+        ctk.CTkLabel(frame_zona_inputs, text=lbl3, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
+        campo3_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder3, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador3:
             campo3_ativo.configure(validate="key", validatecommand=(validador3, "%P"))
         campo3_ativo.pack(pady=(2, 8))
 
     if lbl4:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl4, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
-        campo4_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder4, width=340, height=30)
+        ctk.CTkLabel(frame_zona_inputs, text=lbl4, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
+        campo4_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder4, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador4:
             campo4_ativo.configure(validate="key", validatecommand=(validador4, "%P"))
         campo4_ativo.pack(pady=(2, 8))
 
     if lbl5:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl5, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
-        campo5_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder5, width=340, height=30)
+        ctk.CTkLabel(frame_zona_inputs, text=lbl5, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
+        campo5_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder5, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador5:
             campo5_ativo.configure(validate="key", validatecommand=(validador5, "%P"))
         campo5_ativo.pack(pady=(2, 8))
 
     if lbl6:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl6, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
-        campo6_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder6, width=340, height=30)
+        ctk.CTkLabel(frame_zona_inputs, text=lbl6, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
+        campo6_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder6, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador6:
             campo6_ativo.configure(validate="key", validatecommand=(validador6, "%P"))
         campo6_ativo.pack(pady=(2, 8))
 
     if lbl7:
-        ctk.CTkLabel(frame_zona_inputs, text=lbl7, font=ctk.CTkFont(size=12, weight="bold"), anchor="center").pack(pady=(8, 0))
-        campo7_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder7, width=340, height=30)
+        ctk.CTkLabel(frame_zona_inputs, text=lbl7, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
+        campo7_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder7, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador7:
             campo7_ativo.configure(validate="key", validatecommand=(validador7, "%P"))
         campo7_ativo.pack(pady=(2, 8))
@@ -730,10 +752,12 @@ def gerar_campos_formulario(acao, nome_secao):
     ctk.CTkButton(
         frame_zona_inputs, 
         text=f"Confirmar {acao}", 
-        fg_color="#27ae60", 
-        hover_color="#2ecc71", 
-        width=200, 
-        height=35, 
+        fg_color=VERDE_INSTITUCIONAL, 
+        hover_color=VERDE_ESCURO, 
+        text_color=BRANCO,
+        corner_radius=10,
+        width=220, 
+        height=40, 
         command=confirma_crud
     ).pack(pady=12)
 
@@ -742,7 +766,7 @@ def gerar_campos_formulario(acao, nome_secao):
         frame_zona_inputs, 
         text="", 
         font=ctk.CTkFont(size=12, weight="bold"), 
-        text_color="#e74c3c"
+        text_color=VERMELHO_ERRO
     )
     label_erro_crud.pack(pady=(0, 5))
 
@@ -776,31 +800,34 @@ def montar_estrutura_painel(nome):
     ctk.CTkLabel(
         frame_conteudo, 
         text=f"Painel de {nome}", 
-        font=ctk.CTkFont(size=22, weight="bold")
+        font=ctk.CTkFont(family=FONTE_TITULO, size=24, weight="bold"), text_color=CINZA_ESCURO
     ).pack(pady=(20, 15))
 
-    # ====== Sub barra de ferramentas CRUD Botões de ação superior internos
-    frame_botoes_crud = ctk.CTkFrame(frame_conteudo, fg_color="transparent")
-    frame_botoes_crud.pack(pady=10)
+    # Sub-barra de ferramentas CRUD (Botões de ação superior internos)
+    frame_botoes_crud = ctk.CTkFrame(frame_conteudo, fg_color=BRANCO, corner_radius=16, border_width=1, border_color=BORDA_SUAVE)
+    frame_botoes_crud.pack(pady=10, padx=20)
 
-    ctk.CTkButton(frame_botoes_crud, text="Acrescentar", width=120, height=32, fg_color="#1abc9c", hover_color="#16a085", command=acao_acrescentar_clicada).pack(side="left", padx=6)
-    ctk.CTkButton(frame_botoes_crud, text="Pesquisar",   width=120, height=32, fg_color="#3498db", hover_color="#2980b9", command=acao_pesquisar_clicada).pack(side="left", padx=6)
-    ctk.CTkButton(frame_botoes_crud, text="Atualizar",   width=120, height=32, fg_color="#f1c40f", hover_color="#d35400", command=acao_atualizar_clicada).pack(side="left", padx=6)
-    ctk.CTkButton(frame_botoes_crud, text="Remover",     width=120, height=32, fg_color="#e74c3c", hover_color="#c0392b", command=acao_remover_clicada).pack(side="left", padx=6)
+    ctk.CTkButton(frame_botoes_crud, text="Acrescentar", width=125, height=36, corner_radius=10, fg_color=VERDE_INSTITUCIONAL, hover_color=VERDE_ESCURO, text_color=BRANCO, command=acao_acrescentar_clicada).pack(side="left", padx=7, pady=10)
+    ctk.CTkButton(frame_botoes_crud, text="Pesquisar",   width=125, height=36, corner_radius=10, fg_color=CINZA_ESCURO, hover_color="#1A202C", text_color=BRANCO, command=acao_pesquisar_clicada).pack(side="left", padx=7, pady=10)
+    ctk.CTkButton(frame_botoes_crud, text="Atualizar",   width=125, height=36, corner_radius=10, fg_color=DOURADO_PREMIUM, hover_color="#B8941F", text_color="#1A202C", command=acao_atualizar_clicada).pack(side="left", padx=7, pady=10)
+    ctk.CTkButton(frame_botoes_crud, text="Remover",     width=125, height=36, corner_radius=10, fg_color=VERMELHO_ERRO, hover_color=VERMELHO_HOVER, text_color=BRANCO, command=acao_remover_clicada).pack(side="left", padx=7, pady=10)
 
     # Frame central com barra de rolagem onde o formulário é renderizado dinamicamente
-    frame_zona_inputs = ctk.CTkScrollableFrame(frame_conteudo, fg_color="transparent", width=450, height=320)
-    frame_zona_inputs.pack(fill="both", expand=True, padx=20, pady=5)
+    frame_zona_inputs = ctk.CTkScrollableFrame(frame_conteudo, fg_color=BRANCO, corner_radius=18, border_width=1, border_color=BORDA_SUAVE, width=520, height=350)
+    frame_zona_inputs.pack(fill="both", expand=True, padx=28, pady=8)
 
     # LABEL FIXo: Onde as respostas e dados de sucesso são mostrados 
     label_mensagem = ctk.CTkLabel(
         frame_conteudo, 
         text="", 
-        font=ctk.CTkFont(size=13, weight="normal"), 
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="normal"), 
         justify="left", 
-        wraplength=600
+        wraplength=700,
+        text_color=CINZA_ESCURO,
+        fg_color="transparent",
+        corner_radius=14
     )
-    label_mensagem.pack(pady=15, padx=20)
+    label_mensagem.pack(pady=15, padx=28, fill="x")
 
 
 # ======== SEÇÃO NOVA: VISUAL DO DASHBOARD B.I. ======
@@ -934,12 +961,12 @@ def mostrar_secao_vendas():
 
 # ============= COMPONENTES DO MENU LATERAL (BOTÕES) =============
 
-ctk.CTkButton(frame_lateral, text=" CLIENTES",    anchor="w", width=160, height=38, fg_color="transparent", hover_color="#0f3460", font=ctk.CTkFont(size=13), command=mostrar_tela_clientes).pack(pady=2, padx=10)
-ctk.CTkButton(frame_lateral, text=" SEGURADORAS", anchor="w", width=160, height=38, fg_color="transparent", hover_color="#0f3460", font=ctk.CTkFont(size=13), command=mostrar_secao_seguradoras).pack(pady=2, padx=10)
-ctk.CTkButton(frame_lateral, text=" PLANOS",      anchor="w", width=160, height=38, fg_color="transparent", hover_color="#0f3460", font=ctk.CTkFont(size=13), command=mostrar_secao_planos).pack(pady=2, padx=10)
-ctk.CTkButton(frame_lateral, text=" BENS",        anchor="w", width=160, height=38, fg_color="transparent", hover_color="#0f3460", font=ctk.CTkFont(size=13), command=mostrar_secao_bens).pack(pady=2, padx=10)
-ctk.CTkButton(frame_lateral, text=" APÓLICES",    anchor="w", width=160, height=38, fg_color="transparent", hover_color="#0f3460", font=ctk.CTkFont(size=13), command=mostrar_secao_apolices).pack(pady=2, padx=10)
-ctk.CTkButton(frame_lateral, text=" VENDAS",      anchor="w", width=160, height=38, fg_color="transparent", hover_color="#0f3460", font=ctk.CTkFont(size=13), command=mostrar_secao_vendas).pack(pady=2, padx=10)
+ctk.CTkButton(frame_lateral, text=" CLIENTES",    anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_tela_clientes).pack(pady=3, padx=14)
+ctk.CTkButton(frame_lateral, text=" SEGURADORAS", anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_secao_seguradoras).pack(pady=3, padx=14)
+ctk.CTkButton(frame_lateral, text=" PLANOS",      anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_secao_planos).pack(pady=3, padx=14)
+ctk.CTkButton(frame_lateral, text=" BENS",        anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_secao_bens).pack(pady=3, padx=14)
+ctk.CTkButton(frame_lateral, text=" APÓLICES",    anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_secao_apolices).pack(pady=3, padx=14)
+ctk.CTkButton(frame_lateral, text=" VENDAS",      anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_secao_vendas).pack(pady=3, padx=14)
 
 # ===== BOTÃO  B.I. NO MENU LATERAL
 ctk.CTkButton(
@@ -948,7 +975,7 @@ ctk.CTkButton(
     anchor="w", 
     width=160, 
     height=42, 
-    fg_color="#1e3d59", 
+    fg_color="#024d0d", 
     hover_color="#17b978", 
     font=ctk.CTkFont(size=13, weight="bold"), 
     command=mostrar_dashboard_bi
@@ -957,7 +984,7 @@ ctk.CTkButton(
 # Espaçador interno para empurrar o botão Sair para baixo
 ctk.CTkLabel(frame_lateral, text="").pack(fill="both", expand=True)
 
-ctk.CTkButton(frame_lateral, text=" LOGOUT / SAIR", anchor="w", width=160, height=38, fg_color="#e74c3c", hover_color="#c0392b", font=ctk.CTkFont(size=13, weight="bold"), command=fechar_login).pack(pady=15, padx=10)
+ctk.CTkButton(frame_lateral, text=" LOGOUT / SAIR", anchor="w", width=160, height=38, fg_color=VERMELHO_ERRO, hover_color=VERMELHO_HOVER, text_color=BRANCO, font=ctk.CTkFont(size=13, weight="bold"), command=fechar_login).pack(pady=15, padx=10)
 
 
 # Inicializa a execução da janela do Tkinter
