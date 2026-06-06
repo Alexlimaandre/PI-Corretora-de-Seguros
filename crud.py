@@ -130,8 +130,15 @@ def read_pessoa_por_cpf(cpf):
     # Busca cliente pelo CPF — retorna dicionário ou None se não encontrar
     try:
         cursor.execute(
-            """SELECT cpf_cnpj, nome_completo, email, sexo,
-                      telefone, data_nascimento, status
+            """SELECT 
+                id_pessoa,
+                cpf_cnpj,
+                nome_completo,
+                email, 
+                sexo,
+                telefone,
+                data_nascimento, 
+                status
                FROM pessoa WHERE cpf_cnpj = %s""",
             (str(cpf),)
         )
@@ -143,13 +150,14 @@ def read_pessoa_por_cpf(cpf):
         # O banco retorna uma tupla — convertemos para dicionário
         # para facilitar o uso na interface (cliente['nome_completo'] etc)
         cliente = {
-            "cpf_cnpj":        resultado[0],
-            "nome_completo":   resultado[1],
-            "email":           resultado[2],
-            "sexo":            resultado[3],
-            "telefone":        resultado[4],
-            "data_nascimento": str(resultado[5]),   # converte data para texto
-            "status":          resultado[6]
+            "id_pessoa":      resultado[0],
+            "cpf_cnpj":        resultado[1],
+            "nome_completo":   resultado[2],
+            "email":           resultado[3],
+            "sexo":            resultado[4],
+            "telefone":        resultado[5],
+            "data_nascimento": str(resultado[6]),   # converte data para texto
+            "status":          resultado[7]
         }
         return cliente
 
@@ -592,12 +600,12 @@ def update_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
             return False    # Se o CPF não for localizado na busca, já para aqui
 
         # Se o parâmetro passado for vazio, mantém o valor que já existia no banco
-        nome_final      = nome if nome != "" else cliente_atual["nome_completo"]
-        email_final     = email if email != "" else cliente_atual["email"]
-        sexo_final      = sexo if sexo != "" else cliente_atual["sexo"]
-        telefone_final  = telefone if telefone != "" else cliente_atual["telefone"]
-        data_nasc_final = data_nasc if data_nasc != "" else cliente_atual["data_nascimento"]
-        status_final    = status if status != "" else cliente_atual["status"]
+        nome      = nome if nome != "" else cliente_atual["nome_completo"]
+        email     = email if email != "" else cliente_atual["email"]
+        sexo      = sexo if sexo != "" else cliente_atual["sexo"]
+        telefone  = telefone if telefone != "" else cliente_atual["telefone"]
+        data_nasc = data_nasc if data_nasc != "" else cliente_atual["data_nascimento"]
+        status    = status if status != "" else cliente_atual["status"]
 
         # Executa o UPDATE com a tabela 'pessoa' (no singular) com os valores tratados
         cursor.execute(
@@ -605,7 +613,7 @@ def update_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
                SET nome_completo=%s, email=%s, sexo=%s,
                    telefone=%s, data_nascimento=%s, status=%s
                WHERE cpf_cnpj = %s""",
-            (nome_final, email_final, sexo_final, telefone_final, data_nasc_final, status_final, str(cpf))
+            (nome, email, sexo, telefone, data_nasc, status, str(cpf))
         )
         conn.commit()
 
@@ -722,14 +730,13 @@ def update_bem(id_bem, id_pessoa, tipo_bem, descricao_bem, valor_estimado):
 
 #                  DELETE                   #
 
-def delete_pessoa(cpf):
+def delete_pessoa(id):
     # Remove um cliente pelo CPF
     # Retorna True se removeu, False se o CPF não existia
     try:
         cursor.execute(
-            "DELETE FROM pessoa WHERE cpf_cnpj = %s",
-            (str(cpf),)
-        )
+            "DELETE FROM pessoa WHERE id_pessoa = %s",
+            (id,))
         conn.commit()
 
         if cursor.rowcount == 0:

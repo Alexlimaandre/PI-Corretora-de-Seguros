@@ -52,6 +52,9 @@ def limita_sexo(texto_sexo):               # sexo deve ser vazio ou 1 caractere 
         return False
     return texto_sexo.upper() in ["M", "F", "O"]
 
+def limite_cnpj(tamanho_cnpj):            # CNPJ não ultrapassa 14 caracteres
+    return len(tamanho_cnpj) <= 14
+
 
 # Registra as funções para que possam ser usadas como validadores pelo Tkinter
 validador_cpf      = janela.register(limita_cpf)
@@ -290,6 +293,7 @@ def confirma_crud():
             if cliente:
                 mensagem_alerta = (
                     f"Cliente encontrado!\n\n"
+                    f"ID: {cliente['id_pessoa']}\n"
                     f"CPF/CNPJ: {cliente['cpf_cnpj']}\n"
                     f"Nome: {cliente['nome_completo']}\n"
                     f"Email: {cliente['email']}\n"
@@ -551,7 +555,7 @@ def confirma_crud():
                 return
 
     # Exibe a mensagem de sucesso inline diretamente na tela sem pop-up externo
-    mostrar_mensagem_inline(mensagem_alerta, "VERDE")
+    mostrar_mensagem_inline(mensagem_alerta, VERDE_INSTITUCIONAL)
 
 
 # ====== === CONSTRUÇÃO DINÂMICA DOS CAMPOS DO FORMULÁRIO    =========
@@ -594,7 +598,7 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl2, placeholder2, validador2 = "Nome Completo:", "Filtrar por Nome", None
             lbl5, placeholder5, validador5 = "Telefone:", "Filtrar por Telefone (DDD + Número)", validador_telefone
         elif acao == "Remover":
-            lbl1, placeholder1, validador1 = "CPF / CNPJ do Cliente:", "Digite o CPF do cliente para remover", validador_cpf
+            lbl1, placeholder1, validador1 = "ID do Cliente:", "Digite o ID do cliente para remover", validador_cpf
         elif acao == "Atualizar":
             lbl1, placeholder1, validador1 = "CPF / CNPJ (Obrigatório):", "CPF do cliente que deseja alterar", validador_cpf
             lbl2, placeholder2, validador2 = "Nome Completo:", "Novo nome ou mantenha vazio", None
