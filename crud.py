@@ -441,16 +441,13 @@ def read_seguradora_por_id(id_seguradora):
                         (id_seguradora,)
         )
         
-        resultados = cursor.fetchall()
-        seguradoras = []
-        for resultado in resultados:
-            seguradora = {
-                "id": resultado[0],
-                "nome": resultado[1],
-                "cnpj": resultado[2],
-                "telefone": resultado[3]
-            }
-            seguradoras.append(seguradora)
+        resultado = cursor.fetchone()
+        seguradora = {
+            "id": resultado[0],
+            "nome": resultado[1],
+            "cnpj": resultado[2],
+            "telefone": resultado[3]
+        }
         return seguradora
 
     except Exception as e:
@@ -471,17 +468,15 @@ def read_seguradora_por_cnpj(cnpj):
                         WHERE cnpj = %s""",
                         (cnpj,)
         )
-        resultados = cursor.fetchall()
-        seguradoras = []
-        for resultado in resultados:
-            seguradora = {
-                "id": resultado[0],
-                "nome": resultado[1],
-                "cnpj": resultado[2],
-                "telefone": resultado[3]
-            }
-            seguradoras.append(seguradora)
-        return seguradoras
+        resultado = cursor.fetchone()
+
+        seguradora = {
+            "id": resultado[0],
+            "nome": resultado[1],
+            "cnpj": resultado[2],
+            "telefone": resultado[3]
+        }
+        return seguradora
 
     except Exception as e:
         conn.rollback()
@@ -669,6 +664,15 @@ def update_cotacao(id_cotacao, id_pessoa, id_seguradora, id_plano, valor, data):
 def update_seguradora(id_seguradora, nome, cnpj, telefone):
     # Atualiza os dados de uma seguradora pelo ID
     try:
+        
+        seguradora_atual = read_seguradora_por_id(id_seguradora)
+        
+        if not seguradora_atual:
+            return False 
+        nome      = nome if nome != "" else seguradora_atual["nome"]
+        cnpj      = cnpj if cnpj != "" else seguradora_atual["cnpj"]
+        telefone  = telefone if telefone != "" else seguradora_atual["telefone"]
+
         cursor.execute(
             """UPDATE seguradora
                SET nome_fantasia=%s, cnpj=%s, telefone_suporte=%s
