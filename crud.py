@@ -487,8 +487,10 @@ def read_plano_por_id(id_plano):
     try:
         cursor.execute("""
             SELECT
-                p.id_plano || ' - ' || p.nome_plano AS plano_id,
-                s.id_seguradora || ' - ' || s.nome_fantasia AS seguradora_id,
+                p.id_plano as id_plano,
+                p.nome_plano AS nome_plano,
+                s.id_seguradora as id_seguradora,
+                s.nome_fantasia AS seguradora,
                 p.tipo_cobertura AS cobertura
             FROM Plano p
             JOIN Seguradora s
@@ -502,9 +504,11 @@ def read_plano_por_id(id_plano):
             return None
 
         plano = {
-            "plano_id": resultado[0],
-            "seguradora_id": resultado[1],
-            "cobertura": resultado[2],
+            "id_plano": resultado[0],
+            "nome_plano": resultado[1],
+            "id_seguradora": resultado[2],
+            "seguradora": resultado[3],
+            "cobertura": resultado[4],
         }
 
         return plano
@@ -518,8 +522,10 @@ def read_plano_por_nome(nome_plano):
     try:
         cursor.execute("""
             SELECT
-                p.id_plano || ' - ' || p.nome_plano AS plano_id,
-                s.id_seguradora || ' - ' || s.nome_fantasia AS seguradora_id,
+                p.id_plano as id_plano,
+                p.nome_plano AS nome_plano,
+                s.id_seguradora as id_seguradora,
+                s.nome_fantasia AS seguradora,
                 p.tipo_cobertura AS cobertura
             FROM Plano p
             JOIN Seguradora s
@@ -533,9 +539,11 @@ def read_plano_por_nome(nome_plano):
             return None
 
         plano = {
-            "plano_id": resultado[0],
-            "seguradora_id": resultado[1],
-            "cobertura": resultado[2],
+            "id_plano": resultado[0],
+            "nome_plano": resultado[1],
+            "id_seguradora": resultado[2],
+            "seguradora": resultado[3],
+            "cobertura": resultado[4],
         }
 
         return plano
@@ -553,7 +561,8 @@ def read_bem_por_id(id_bem):
                 b.descricao_bem as descricao_bem,
                 b.tipo_bem as tipo_bem,
                 b.valor_estimado as valor_estimado,
-                p.id_pessoa||' - '||p.nome_completo AS id_nome_pessoa
+                p.id_pessoa as id_pessoa,
+                p.nome_completo as nome_pessoa
             FROM Bens b
             JOIN pessoa p
             USING(id_pessoa)
@@ -570,7 +579,8 @@ def read_bem_por_id(id_bem):
             "descricao_bem": resultado[1],
             "tipo_bem": resultado[2],
             "valor_estimado": resultado[3],
-            "id_nome_pessoa": resultado[4]
+            "id_pessoa": resultado[4],
+            "nome_pessoa": resultado[5]
         }
         return bem
 
@@ -693,6 +703,16 @@ def update_seguradora(id_seguradora, nome, cnpj, telefone):
 def update_plano(id_plano, id_seguradora, nome_plano, tipo_cobertura):
     # Atualiza os dados de um plano pelo ID
     try:
+        
+        read_plano = read_plano_por_id(id_plano)
+        
+        if not read_plano:
+            return False
+        
+        id_seguradora = id_seguradora if id_seguradora != "" else read_plano["id_seguradora"]
+        nome_plano = nome_plano if nome_plano != "" else read_plano["nome_plano"]
+        tipo_cobertura = tipo_cobertura if tipo_cobertura != "" else read_plano["cobertura"]
+        
         cursor.execute(
             """UPDATE plano
                SET id_seguradora=%s, nome_plano=%s, tipo_cobertura=%s

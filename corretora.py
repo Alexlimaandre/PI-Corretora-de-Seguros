@@ -394,10 +394,11 @@ def confirma_crud():
             if plano:
                 mensagem_alerta = (
                     f"Plano localizado!\n\n"
-                    f"ID Plano: {plano['id_plano']}\n"
-                    f"ID Seguradora: {plano['id_seguradora']}\n"
+                    f"ID do Plano: {plano['id_plano']}\n"
+                    f"ID da Seguradora: {plano['id_seguradora']}\n"
                     f"Nome do Plano: {plano['nome_plano']}\n"
-                    f"Tipo Cobertura: {plano['tipo_cobertura']}"
+                    f"Nome da Seguradora: {plano['seguradora']}\n"
+                    f"Tipo Cobertura: {plano['cobertura']}"
                 )
             else:
                 label_erro_crud.configure(text="Nenhum plano localizado!", text_color=VERMELHO_ERRO)
@@ -438,8 +439,9 @@ def confirma_crud():
                 mensagem_alerta = (
                     f"Bem encontrado!\n\n"
                     f"ID Bem: {bem['id_bem']}\n"
+                    f"ID Cliente: {bem['id_pessoa']}\n"
                     f"Tipo do Bem: {bem['tipo_bem']}\n"
-                    f"Descrição: {bem['descricao']}\n"
+                    f"Descrição: {bem['descricao_bem']}\n"
                     f"Valor Estimado: R$ {bem['valor_estimado']}"
                 )
             else:
