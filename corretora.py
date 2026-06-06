@@ -482,11 +482,13 @@ def confirma_crud():
             if apolice:
                 mensagem_alerta = (
                     f"Apólice encontrada!\n\n"
-                    f"Nº Apólice: {apolice['id_apolice']}\n"
-                    f"ID Bem: {apolice['id_bem']}\n"
-                    f"ID Plano: {apolice['id_plano']}\n"
-                    f"Franquia: R$ {apolice['valor_franquia']}\n"
-                    f"Prêmio: R$ {apolice['valor_premio']}"
+                    f"ID Apólice: {apolice['id_apolice']}\n"
+                    f"ID Cotação: {apolice['id_cotacao']}\n"
+                    f"Cliente: {apolice['cliente']}\n"
+                    f"Plano: R$ {apolice['plano']}\n"
+                    f"Valor Cotação: R$ {apolice['valor']}"
+                    f"Inicio Vigência: {data_banco_para_br(apolice['inicio'])}\n"
+                    f"Fim Vigência: {data_banco_para_br(apolice['fim'])}"
                 )
             else:
                 label_erro_crud.configure(text="Apólice não localizada!", text_color=VERMELHO_ERRO)
@@ -674,16 +676,14 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl1, placeholder1, validador1 = "Nº Apólice:", "Digite o Nº da apólice para remover", validador_apolice
         elif acao == "Atualizar":
             lbl1, placeholder1, validador1 = "Nº Apólice (Obrigatório):", "Número da apólice que deseja alterar", validador_apolice
-            lbl2, placeholder2, validador2 = "ID Bem:", "Novo ID do Bem ou mantenha vazio", None
-            lbl3, placeholder3, validador3 = "ID Plano:", "Novo ID do Plano ou mantenha vazio", None
-            lbl4, placeholder4, validador4 = "Valor Franquia R$:", "Novo valor de franquia ou mantenha vazio", None
-            lbl5, placeholder5, validador5 = "Valor Prêmio R$:", "Novo valor de prêmio ou mantenha vazio", None
+            lbl2, placeholder2, validador2 = "ID da Cotação R$:", "Novo id da cotação ou mantenha vazio", None
+            lbl3, placeholder3, validador3 = "Data Inicio:", "Nova data de início ou mantenha vazio", None
+            lbl4, placeholder4, validador4 = "Data Fim:", "Nova data de término ou mantenha vazio", None
+            lbl5, placeholder5, validador5 = "Valor Franquia R$:", "Novo valor de franquia ou mantenha vazio", None
         else:
-            lbl1, placeholder1, validador1 = "Nº Apólice:", "Código da apólice (Até 15 caracteres)", validador_apolice
-            lbl2, placeholder2, validador2 = "ID Bem:", "ID do bem associado", None
-            lbl3, placeholder3, validador3 = "ID Plano:", "ID do plano associado", None
-            lbl4, placeholder4, validador4 = "Valor Franquia R$:", "Valor pago em caso de sinistro", None
-            lbl5, placeholder5, validador5 = "Valor Prêmio R$:", "Custo total da apólice", None
+            lbl1, placeholder1, validador1 = "Nº da Cotação:", "Código da cotação (Até 15 caracteres)", validador_apolice
+            lbl2, placeholder2, validador2 = "Data Inicio:", "Data de início da apólice", None
+            lbl3, placeholder3, validador3 = "Data Fim:", "Data de término da apólice", None
 
     elif nome_secao == "Vendas":
         if acao == "Pesquisar":

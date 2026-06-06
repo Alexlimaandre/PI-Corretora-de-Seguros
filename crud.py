@@ -250,19 +250,19 @@ def read_pessoa_por_telefone(telefone):
         print("Erro ao buscar pessoa por telefone:", e)
         return None
 
-def read_apolice(id_apolice):
+def read_apolice_por_id(id_apolice):
     # Busca apólice pelo ID — retorna dicionário ou None
     try:
         cursor.execute(
             """SELECT 
-                    a.id_apolice as id_apolice,
-                    a.id_cotacao as id_cotacao,
+                    a.id_apolice AS id_apolice,
+                    a.id_cotacao AS id_cotacao,
                     p.nome_completo AS cliente,
                     s.nome_fantasia AS seguradora,
                     pl.nome_plano AS plano,
                     c.valor_cotacao AS valor,
-                    a.inicio,
-                    a.fim
+                    a.inicio AS inicio,
+                    a.fim AS fim
                 FROM apolice a
                 JOIN cotacoes c 
                     USING(id_cotacao)
@@ -295,53 +295,6 @@ def read_apolice(id_apolice):
     except Exception as e:
         conn.rollback()
         print("Erro ao buscar apólice:", e)
-        return None
-
-def read_apolice_por_cotacao(id_cotacao):
-    # Busca apólice pelo ID da cotação vinculada
-    try:
-        cursor.execute(
-            """SELECT 
-                    a.id_apolice as id_apolice,
-                    c.id_cotacao as id_cotacao,
-                    p.nome_completo AS cliente,
-                    s.nome_fantasia AS seguradora,
-                    pl.nome_plano AS plano,
-                    c.valor_cotacao AS valor,
-                    a.inicio,
-                    a.fim
-                FROM apolice a
-                JOIN cotacoes c 
-                    USING(id_cotacao)
-                JOIN pessoa p 
-                    USING(id_pessoa)
-                JOIN seguradora s 
-                    USING(id_seguradora)
-                JOIN plano pl 
-                    USING(id_plano)
-                WHERE c.id_cotacao = %s;""",
-            (id_cotacao,)
-        )
-        resultado = cursor.fetchone()
-
-        if resultado is None:
-            return None
-
-        apolice = {
-            "id_apolice": resultado[0],
-            "id_cotacao": resultado[1],
-            "cliente": resultado[2],
-            "seguradora": resultado[3],
-            "plano": resultado[4],
-            "valor": resultado[5],
-            "inicio":     str(resultado[6]),
-            "fim":        str(resultado[7])
-        }
-        return apolice
-
-    except Exception as e:
-        conn.rollback()
-        print("Erro ao buscar apólice por cotação:", e)
         return None
 
 def read_cotacao(id_cotacao):
@@ -634,6 +587,14 @@ def update_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
 def update_apolice(id_apolice, inicio, fim):
     # Atualiza as datas de início e fim de uma apólice pelo ID
     try:
+        
+        apolice_atual = read_apolice_por_id(id_apolice)
+        if not apolice_atual:
+            return False
+        
+        inicio = inicio if inicio != "" else apolice_atual["inicio"]
+        fim = fim if fim != "" else apolice_atual["fim"]
+        
         cursor.execute(
             """UPDATE apolice SET inicio=%s, fim=%s
                WHERE id_apolice = %s""",
