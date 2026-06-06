@@ -97,7 +97,7 @@ def create_plano(id_seguradora, tipo_cobertura, nome_plano):
 def create_bem(id_pessoa, tipo_bem, descricao_bem, valor_estimado):
     try:
         cursor.execute(
-            """INSERT INTO bem (id_pessoa, tipo_bem, descricao_bem, valor_estimado)
+            """INSERT INTO bens (id_pessoa, tipo_bem, descricao_bem, valor_estimado)
                VALUES (%s, %s, %s, %s)""",
             (id_pessoa, tipo_bem, descricao_bem, valor_estimado)
         )
@@ -733,8 +733,17 @@ def update_plano(id_plano, id_seguradora, nome_plano, tipo_cobertura):
 def update_bem(id_bem, id_pessoa, tipo_bem, descricao_bem, valor_estimado):
     # Atualiza os dados de um bem pelo ID
     try:
+        
+        bem_atual = read_bem_por_id(id_bem)
+        if not bem_atual:
+            return False
+        id_pessoa = id_pessoa if id_pessoa != "" else bem_atual["id_pessoa"]
+        tipo_bem = tipo_bem if tipo_bem != "" else bem_atual["tipo_bem"]
+        descricao_bem = descricao_bem if descricao_bem != "" else bem_atual["descricao_bem"]
+        valor_estimado = valor_estimado if valor_estimado != "" else bem_atual["valor_estimado"]
+        
         cursor.execute(
-            """UPDATE bem
+            """UPDATE bens
                SET id_pessoa=%s, tipo_bem=%s,
                    descricao_bem=%s, valor_estimado=%s
                WHERE id_bem = %s""",
@@ -848,7 +857,7 @@ def delete_bem(id_bem):
     # Remove um bem pelo ID
     try:
         cursor.execute(
-            "DELETE FROM bem WHERE id_bem = %s",
+            "DELETE FROM bens WHERE id_bem = %s",
             (id_bem,)
         )
         conn.commit()

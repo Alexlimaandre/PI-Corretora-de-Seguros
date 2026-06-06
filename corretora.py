@@ -657,15 +657,15 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl1, placeholder1, validador1 = "ID do Bem:", "Digite o ID do bem para remover", None
         elif acao == "Atualizar":
             lbl1, placeholder1, validador1 = "ID Bem (Obrigatório):", "ID para localizar a bem", None
-            lbl2, placeholder2, validador2 = "Tipo Bem:", "Novo tipo (Ex: Imóvel, Veículo) ou mantenha vazio", None
-            lbl3, placeholder3, validador3 = "Descrição:", "Nova descrição ou mantenha vazio", None
-            lbl4, placeholder4, validador4 = "Valor Estimado R$:", "Novo valor ou mantenha vazio", None
-            lbl5, placeholder5, validador5 = "ID Proprietário (CPF):", "Novo CPF do proprietário ou mantenha vazio", validador_cpf
+            lbl2, placeholder5, validador5 = "ID Proprietário:", "Novo proprietário ou mantenha vazio", validador_cpf
+            lbl3, placeholder2, validador2 = "Tipo Bem:", "Novo tipo (Ex: Imóvel, Veículo) ou mantenha vazio", None
+            lbl4, placeholder3, validador3 = "Descrição:", "Nova descrição ou mantenha vazio", None
+            lbl5, placeholder4, validador4 = "Valor Estimado R$:", "Novo valor ou mantenha vazio", None
         else:
-            lbl1, placeholder1, validador1 = "Tipo Bem:", "Ex: Imóvel, Veículo, Celular", None
-            lbl2, placeholder2, validador2 = "Descrição:", "Detalhes do bem (Modelo, Placa, Endereço)", None
-            lbl3, placeholder3, validador3 = "Valor Estimado R$:", "Ex: 50000.00", None
-            lbl4, placeholder4, validador4 = "ID Proprietário (CPF):", "CPF do cliente cadastrado", validador_cpf
+            lbl1, placeholder4, validador4 = "ID Proprietário (CPF):", "CPF do cliente cadastrado", validador_cpf
+            lbl2, placeholder1, validador1 = "Tipo Bem:", "Ex: Imóvel, Veículo, Celular", None
+            lbl3, placeholder2, validador2 = "Descrição:", "Detalhes do bem (Modelo, Placa, Endereço)", None
+            lbl4, placeholder3, validador3 = "Valor Estimado R$:", "Ex: 50000.00", None
 
     elif nome_secao == "Apolices":
         if acao == "Pesquisar":
