@@ -1032,14 +1032,23 @@ def listagem_geral_apolices():
  
    
 ## CONSULTAS PARA OS INDICADORES DO BI ##
-def qtd_cliente_por_status(status):
+def qtd_cliente_por_status(status=None):
     try:
-        cursor.execute("""  
+        if status is None or status == "":
+            cursor.execute("""  
                     SELECT 
                         status||'(s): '||COUNT(*) AS qtd_status
                     FROM pessoa
                     GROUP BY status
                     HAVING UPPER(status) = 'ATIVO';
+                    """)
+        else:
+            cursor.execute("""  
+                    SELECT 
+                        status||'(s): '||COUNT(*) AS qtd_status
+                    FROM pessoa
+                    GROUP BY status
+                    HAVING UPPER(status) = '%s';
                     """,
                     (status,)
         )
@@ -1057,17 +1066,22 @@ def qtd_cliente_por_status(status):
         print("Erro ao buscar indicador de clientes por status:", e)
         return None
     
-def novas_apolices_em_x_dias(dias):
+def novas_apolices(dias=None):
     try:
-        cursor.execute("""
+        if dias is None:
+            cursor.execute("SELECT COUNT(*) AS qtd_novas_apolices FROM Apolice;"),
+        else:            
+            cursor.execute("""
                     SELECT 
                         COUNT(*) AS qtd_novas_apolices
-                    FROM apolice
+                    FROM Apolice
                     WHERE inicio >= CURRENT_DATE - INTERVAL '%s' DAY;
-                    """, (dias,))
-        resultado = cursor.fetchone()
+                    """, 
+                    (dias,))
+            
         if resultado is None:
             return None
+        resultado = cursor.fetchone()
 
         indicador = {
             "qtd_novas_apolices": resultado[0]
@@ -1079,14 +1093,17 @@ def novas_apolices_em_x_dias(dias):
         print("Erro ao buscar indicador de novas apólices:", e)
         return None
     
-def orcamentos_feitos_em_x_dias(dias):
+def novas_cotacoes(dias=None):
     try:
-        cursor.execute("""
-                    SELECT 
-                        COUNT(*) AS qtd_orcamentos
-                    FROM cotacoes
-                    WHERE data_cotacao >= CURRENT_DATE - INTERVAL '%s' DAY;
-                    """, (dias,))
+        if dias is None:
+            cursor.execute("SELECT COUNT(*) AS qtd_orcamentos FROM Cotacoes;"),
+        else:
+            cursor.execute("""
+                        SELECT 
+                            COUNT(*) AS qtd_orcamentos
+                        FROM cotacoes
+                        WHERE data_cotacao >= CURRENT_DATE - INTERVAL '%s' DAY;
+                        """, (dias,))
         resultado = cursor.fetchone()
         if resultado is None:
             return None
@@ -1099,4 +1116,93 @@ def orcamentos_feitos_em_x_dias(dias):
     except Exception as e:
         conn.rollback()
         print("Erro ao buscar indicador de orçamentos feitos:", e)
+        return None
+    
+def apolices_vencidas(dias=None):
+    try:
+        if dias is None:
+            cursor.execute("""
+                        SELECT 
+                            COUNT(*) AS qtd_apolices_vencidas
+                        FROM Apolice
+                        WHERE fim < CURRENT_DATE;
+                        """)
+        else:
+            cursor.execute("""
+                        SELECT 
+                            COUNT(*) AS qtd_apolices_vencidas
+                        FROM Apolice
+                        WHERE fim < CURRENT_DATE - INTERVAL '%s' DAY;
+                        """, (dias,))
+        resultado = cursor.fetchone()
+        if resultado is None:
+            return None
+
+        indicador = {
+            "qtd_apolices_vencidas": resultado[0]
+        }
+        return indicador
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar indicador de apólices vencidas:", e)
+        return None
+    
+def apolices_vencendo(dias=None):
+    try:
+        if dias is None or dias == "":
+            cursor.execute("""
+                        SELECT 
+                            COUNT(*) AS qtd_apolices_vencendo
+                        FROM Apolice
+                        WHERE fim >= CURRENT_DATE AND fim <= CURRENT_DATE + INTERVAL '30' DAY;
+                        """, (dias,))
+        else:
+            cursor.execute("""
+                        SELECT 
+                            COUNT(*) AS qtd_apolices_vencendo
+                        FROM Apolice
+                        WHERE fim >= CURRENT_DATE AND fim <= CURRENT_DATE + INTERVAL '%s' DAY;
+                        """, (dias,))
+        resultado = cursor.fetchone()
+        if resultado is None:
+            return None
+
+        indicador = {
+            "qtd_apolices_vencendo": resultado[0]
+        }
+        return indicador
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar indicador de apólices vencendo:", e)
+        return None
+
+def contrator_por_seguradora():
+    try:
+        cursor.execute("""
+                SELECT
+                    s.nome_fantasia AS seguradora,
+                    COUNT(a.id_apolice) AS qtd_contratos
+                FROM apolice a
+                JOIN cotacoes c 
+                    USING(id_cotacao)
+                JOIN seguradora s 
+                    USING(id_seguradora)
+                GROUP BY s.nome_fantasia
+                ORDER BY qtd_contratos DESC;
+                    """)
+        resultados = cursor.fetchall()
+        contratantes = []
+        for resultado in resultados:
+            contratante = {
+                "seguradora": resultado[0],
+                "qtd_contratos": resultado[1]
+            }
+            contratantes.append(contratante)
+        return contratantes
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar indicador de contratantes por seguradora:", e)
         return None

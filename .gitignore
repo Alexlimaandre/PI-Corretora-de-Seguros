@@ -8,5 +8,5 @@ venv/
 .venv
 .env/
 
-requirements.txt
+requirements
 tash
