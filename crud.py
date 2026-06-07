@@ -303,12 +303,12 @@ def read_cotacao(id_cotacao):
         cursor.execute(
             """
             SELECT
-                c.id_cotacao,
-                p.nome_completo AS Cliente,
-                s.nome_fantasia AS Seguradora,
-                pl.nome_plano AS Plano,
-                c.valor_cotacao AS "Valor Cotação",
-                data_cotacao AS "Data da Cotação"
+                c.id_cotacao AS id_cotacao,
+                p.nome_completo AS nome_pessoa,
+                s.nome_fantasia AS nome_fantasia,
+                pl.nome_plano AS nome_plano,
+                c.valor_cotacao AS valor_cotacao,
+                c.data_cotacao AS data_cotacao
             FROM Seguradora s
             JOIN Plano pl
                 USING(id_seguradora)
@@ -325,12 +325,12 @@ def read_cotacao(id_cotacao):
             return None
 
         venda = {
-            "c.id_cotacao":    resultado[0],
-            "p.nome_pessoa":     str(resultado[1]),
-            "s.nome_fantasia": str(resultado[2]),
-            "pl.nome_plano":      str(resultado[3]),
-            "c.valor_cotacao": str(resultado[4]),
-            "c.data_cotacao":  str(resultado[5])
+            "id_cotacao":    resultado[0],
+            "nome_pessoa":     str(resultado[1]),
+            "nome_fantasia": str(resultado[2]),
+            "nome_plano":      str(resultado[3]),
+            "valor_cotacao": str(resultado[4]),
+            "data_cotacao":  str(resultado[5])
         }
         return venda
 
@@ -542,6 +542,41 @@ def read_bem_por_id(id_bem):
         print("Erro ao buscar bem:", e)
         return None
 
+def read_bem_por_descricao(descricao_bem):
+    try:
+        cursor.execute("""
+            SELECT 
+                b.id_bem as id_bem,
+                b.descricao_bem as descricao_bem,
+                b.tipo_bem as tipo_bem,
+                b.valor_estimado as valor_estimado,
+                p.id_pessoa as id_pessoa,
+                p.nome_completo as nome_pessoa
+            FROM Bens b
+            JOIN pessoa p
+            USING(id_pessoa)
+            WHERE b.descricao_bem ILIKE %s;
+            """,
+            (f"%{descricao_bem}%",)
+        )
+        resultado = cursor.fetchone()
+        if resultado is None:
+            return None
+
+        bem = {
+            "id_bem": resultado[0],
+            "descricao_bem": resultado[1],
+            "tipo_bem": resultado[2],
+            "valor_estimado": resultado[3],
+            "id_pessoa": resultado[4],
+            "nome_pessoa": resultado[5]
+        }
+        return bem
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao buscar bem:", e)
+        return None
 
 #                  UPDATE                   #
 

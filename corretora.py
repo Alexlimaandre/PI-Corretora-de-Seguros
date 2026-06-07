@@ -833,12 +833,16 @@ def confirma_crud():
                 return
 
         elif chamar_acao == "Pesquisar":
-            bem = crud.read_bem_por_id(v1)
+            if v1:
+                bem = crud.read_bem_por_id(v1)
+            elif v2:
+                bem = crud.read_bem_por_descricao(v2)
             if bem:
                 mensagem_alerta = (
                     f"Bem encontrado!\n\n"
                     f"ID Bem: {bem['id_bem']}\n"
                     f"ID Pessoa: {bem['id_pessoa']}\n"
+                    f"Cliente: {bem['nome_pessoa']}\n"
                     f"Tipo do Bem: {bem['tipo_bem']}\n"
                     f"Descrição: {bem['descricao_bem']}\n"
                     f"Valor Estimado: R$ {bem['valor_estimado']}"
@@ -910,9 +914,9 @@ def confirma_crud():
                 return
 
 
-    # ====== CRUD DE VENDAS (Mapeado para Cotações no seu novo banco) ======
+    # ====== CRUD DE COTAÇÕES (Mapeado para Cotações no seu novo banco) ======
 
-    elif painel_usado == "Vendas":
+    elif painel_usado == "Cotações":
 
         if chamar_acao == "Acrescentar":
             sucesso = crud.create_cotacao(v1, v2, v3, v4, data_br_para_banco(v5))
@@ -927,12 +931,12 @@ def confirma_crud():
             if venda:
                 mensagem_alerta = (
                     f"Registro de Cotação Encontrado!\n\n"
-                    f"ID Cotação: {venda['c.id_cotacao']}\n"
-                    f"Cliente: {venda['p.nome_pessoa']}\n"
-                    f"Seguradora: {venda['s.nome_fantasia']}\n"
-                    f"Plano: {venda['plano']}\n"
-                    f"Valor Cotação: R$ {venda['c.valor_cotacao']}\n"
-                    f"Data: {data_banco_para_br(venda['c.data_cotacao'])}"
+                    f"ID Cotação: {venda['id_cotacao']}\n"
+                    f"Cliente: {venda['nome_pessoa']}\n"
+                    f"Seguradora: {venda['nome_fantasia']}\n"
+                    f"Plano: {venda['nome_plano']}\n"
+                    f"Valor Cotação: R$ {venda['valor_cotacao']}\n"
+                    f"Data: {data_banco_para_br(venda['data_cotacao'])}"
                 )
             else:
                 label_erro_crud.configure(text="ID de cotação inexistente!", text_color=VERMELHO_ERRO)
@@ -1049,6 +1053,7 @@ def gerar_campos_formulario(acao, nome_secao):
     elif nome_secao == "Bens":
         if acao == "Pesquisar":
             lbl1, placeholder1, validador1 = "ID Bem:", "Filtrar pelo ID do bem", None
+            lbl2, placeholder2, validador2 = "Descrição Bem:", "Filtrar pela descrição do bem", None
         elif acao == "Remover":
             lbl1, placeholder1, validador1 = "ID do Bem:", "Digite o ID do bem para remover", None
         elif acao == "Atualizar":
@@ -1058,7 +1063,7 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl4, placeholder4, validador4 = "Descrição:", "Nova descrição ou mantenha vazio", None
             lbl5, placeholder5, validador5 = "Valor Estimado R$:", "Novo valor ou mantenha vazio", None
         else:
-            lbl1, placeholder1, validador1 = "ID Proprietário (CPF):", "CPF do cliente cadastrado", validador_cpf
+            lbl1, placeholder1, validador1 = "ID Proprietário:", "ID do cliente cadastrado", validador_cpf
             lbl2, placeholder2, validador2 = "Tipo Bem:", "Ex: Imóvel, Veículo, Celular", None
             lbl3, placeholder3, validador3 = "Descrição:", "Detalhes do bem (Modelo, Placa, Endereço)", None
             lbl4, placeholder4, validador4 = "Valor Estimado R$:", "Ex: 50000.00", None
@@ -1079,7 +1084,7 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl2, placeholder2, validador2 = "Data Inicio:", "Data de início da apólice", None
             lbl3, placeholder3, validador3 = "Data Fim:", "Data de término da apólice", None
 
-    elif nome_secao == "Vendas":
+    elif nome_secao == "Cotações":
         if acao == "Pesquisar":
             lbl1, placeholder1, validador1 = "ID Cotação:", "Código da cotação", None
         elif acao == "Remover":
@@ -1286,9 +1291,9 @@ def mostrar_secao_apolices():
 
 def mostrar_secao_vendas():
     global secao_painel_aberto
-    secao_painel_aberto = "Vendas"
-    montar_estrutura_painel("Vendas")
-    gerar_campos_formulario("Pesquisar", "Vendas")
+    secao_painel_aberto = "Cotações"
+    montar_estrutura_painel("Cotações")
+    gerar_campos_formulario("Pesquisar", "Cotações")
 
 
 # =====+======= COMPONENTES DOS BOTÕES MENU LATERAL  
@@ -1298,7 +1303,7 @@ ctk.CTkButton(frame_lateral, text=" SEGURADORAS", anchor="w", width=175, height=
 ctk.CTkButton(frame_lateral, text=" PLANOS",      anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_secao_planos).pack(pady=3, padx=14)
 ctk.CTkButton(frame_lateral, text=" BENS",        anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_secao_bens).pack(pady=3, padx=14)
 ctk.CTkButton(frame_lateral, text=" APÓLICES",    anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_secao_apolices).pack(pady=3, padx=14)
-ctk.CTkButton(frame_lateral, text=" VENDAS",      anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_secao_vendas).pack(pady=3, padx=14)
+ctk.CTkButton(frame_lateral, text=" COTAÇÕES",      anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_secao_vendas).pack(pady=3, padx=14)
 
 # ===== BOTÃO  B.I. NO MENU LATERAL
 ctk.CTkButton(
