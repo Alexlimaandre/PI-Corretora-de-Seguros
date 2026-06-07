@@ -1,4 +1,4 @@
-# main.py
+# corretora.py
 # Interface gráfica do sistema de corretora de seguros
 # Conectado ao banco de dados PostgreSQL via módulo crud.py
 
@@ -207,97 +207,420 @@ def mostrar_mensagem_inline(mensagem, cor=VERDE_INSTITUCIONAL):
             label_mensagem.configure(text="Aguardando ação ou busca...")
 
 
-# ============= FUNÇÕES DE CLIQUE PARA OS BOTÕES DE B.I. =============
+# ============= DASHBOARD B.I. - NOVA VERSÃO =============
 
-def bi_faturamento_clicado():
-    """Chama o indicador de Ganhos do crud.py e exibe na coluna da direita."""
-    dados = crud.bi_indicador_ganhos_conversao()
-    if dados:
-        texto = (
-            f" INDICADOR DE GANHOS E CONVERSÃO\n"
-            f" Orçamentos Totais (Últimos 30 dias): {dados['total_orcamentos']}\n"
-            f" Apólices Convertidas (Últimos 30 dias): {dados['total_convertidos']}\n\n"
-            f" Taxa de Conversão Comercial: {dados['taxa_conversao']}%\n\n"
-            f"Métrica de B.I.: Avalia a eficiência da equipe de vendas "
-            f"em transformar cotações brutas em contratos ativos."
-        )
-        mostrar_mensagem_inline(texto,"black")
-    else:
-        mostrar_mensagem_inline("Erro ao extrair dados de faturamento.", VERMELHO_ERRO)
+# Variáveis globais usadas somente no painel de B.I.
+cards_indicadores = {}
+cards_descricoes = {}
+campo_periodo_bi = None
+campo_status_bi = None
+frame_ranking_seguradoras = None
+label_resumo_bi = None
 
 
-def bi_seguradoras_clicado():
-    """Chama o indicador de Desempenho do crud.py e exibe na coluna da direita."""
-    ranking = crud.bi_ranking_seguradoras()
-    if ranking:
-        texto = (
-            f" DESEMPENHO POR SEGURADORA \n"
-          
-        )
-        for i, item in enumerate(ranking, 1):
-            texto += f"{i}º - {item['seguradora']}\n     Contratos Fechados: {item['total_contratos']} apólices\n\n"
-        
-        texto += (
-            f"Métrica de B.I.: Identifica quais seguradoras parceiras "
-            f"possuem maior penetração na carteira da corretora para fins "
-            f"de negociação de melhores comissões."
-        )
-        mostrar_mensagem_inline(texto, "black")
-    else:
-        mostrar_mensagem_inline("Nenhum contrato localizado por seguradora.", VERMELHO_ERRO)
+def obter_numero_indicador(dados, chave, padrao=0):
+    """Pega um número dentro de um dicionário de indicador com segurança."""
+    try:
+        if dados and chave in dados and dados[chave] is not None:
+            return int(dados[chave])
+    except Exception:
+        pass
+    return padrao
 
 
-def bi_renovacoes_clicado():
-    """Chama o indicador de Metas do crud.py e exibe na coluna da direita."""
-    dados = crud.bi_clientes_vencidos_e_vencendo()
-    
-    texto = (
-        f" INDICADOR DE METAS E ALERTAS DE RENOVAÇÕES\n"
-      
+def converter_periodo_dias(texto):
+    """Converte o campo de dias para inteiro. Se vier vazio ou inválido, retorna None."""
+    try:
+        texto = str(texto).strip()
+        if texto == "":
+            return None
+        valor = int(texto)
+        if valor <= 0:
+            return None
+        return valor
+    except Exception:
+        return None
+
+
+def formatar_numero_indicador(valor):
+    """Formata números inteiros para os cards do dashboard."""
+    try:
+        return f"{int(valor):,}".replace(",", ".")
+    except Exception:
+        return "0"
+
+
+def calcular_taxa_conversao(convertidos, total):
+    """Calcula taxa de conversão entre apólices e cotações."""
+    try:
+        if total == 0:
+            return 0
+        return round((convertidos / total) * 100, 1)
+    except Exception:
+        return 0
+
+
+def criar_card_indicador(pai, chave, titulo, valor, descricao, cor_borda, linha, coluna):
+    """Cria um card visual de indicador e guarda as labels para atualização dinâmica."""
+    card = ctk.CTkFrame(
+        pai,
+        fg_color=BRANCO,
+        corner_radius=18,
+        border_width=1,
+        border_color=cor_borda
     )
-    
-    texto += " CONTRATOS JÁ VENCIDOS LIGAR COM URGENCIA:\n"
-    if dados["vencidos"]:
-        for item in dados["vencidos"]:
-            texto += f"• Cliente: {item['cliente']}\n  Tel: {item['telefone']} | Apólice: {item['id_apolice']}\n"
-    else:
-        texto += "Nenhum contrato vencido pendente.\n"
-        
-    texto += "ENCIMENTO NOS PRÓXIMOS 10 DIAS :\n"
-    if dados["vencendo"]:
-        for item in dados["vencendo"]:
-            texto += f"• Cliente: {item['cliente']}\n  Tel: {item['telefone']} | Vence em: {item['data_vencimento']}\n"
-    else:
-        texto += "Nenhuma apólice vencendo nos próximos 10 dias.\n"
-        
-    texto += (
-        f"\nMétrica de B.I.: Ação preventiva focada em retenção de clientes "
-        f"e cumprimento de metas de renovação da carteira."
+    card.grid(row=linha, column=coluna, padx=8, pady=8, sticky="nsew")
+
+    ctk.CTkLabel(
+        card,
+        text=titulo,
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"),
+        text_color=TEXTO_SECUNDARIO,
+        anchor="w"
+    ).pack(fill="x", padx=16, pady=(14, 2))
+
+    lbl_valor = ctk.CTkLabel(
+        card,
+        text=valor,
+        font=ctk.CTkFont(family=FONTE_TITULO, size=30, weight="bold"),
+        text_color=CINZA_ESCURO,
+        anchor="w"
     )
-    mostrar_mensagem_inline(texto, "BLACK")
+    lbl_valor.pack(fill="x", padx=16, pady=(0, 2))
+
+    lbl_desc = ctk.CTkLabel(
+        card,
+        text=descricao,
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=11),
+        text_color=TEXTO_SECUNDARIO,
+        anchor="w",
+        justify="left",
+        wraplength=180
+    )
+    lbl_desc.pack(fill="x", padx=16, pady=(0, 14))
+
+    cards_indicadores[chave] = lbl_valor
+    cards_descricoes[chave] = lbl_desc
 
 
-def bi_clientes_clicado():
-    """Chama o indicador de Potencial da carteira no crud.py."""
-    dados = crud.bi_potencial_clientes()
-    if dados:
-        texto = (
-            f" POTENCIAL E SAÚDE DA CARTEIRA\n"
-            f" Patrimônio Total Protegido (Soma dos Bens):\n"
-            f"   R$ {dados['total_protegido']:.2f}\n\n"
-            f" Distribuição de Clientes por Situação:\n"
-        )
-        for resumo in dados["status_resumo"]:
-            texto += f"   • Status [{resumo[0]}]: {resumo[1]} pessoa(s)\n"
-            
-        texto += (
-            f"\nMétrica de B.I.: Mede a exposição total de risco gerenciado "
-            f"pela corretora e o volume volumétrico de clientes."
-        )
-        mostrar_mensagem_inline(texto, "#8e44ad")
-    else:
-        mostrar_mensagem_inline("Erro ao analisar potencial da carteira.", VERMELHO_ERRO)
+def atualizar_card_indicador(chave, valor, descricao=None):
+    """Atualiza o valor e a descrição de um card já criado."""
+    if chave in cards_indicadores:
+        cards_indicadores[chave].configure(text=str(valor))
+    if descricao is not None and chave in cards_descricoes:
+        cards_descricoes[chave].configure(text=str(descricao))
 
+
+def limpar_frame_dashboard(frame):
+    """Remove todos os widgets de um frame."""
+    if frame:
+        for widget in frame.winfo_children():
+            widget.destroy()
+
+
+def atualizar_dashboard_bi():
+    """Atualiza todos os indicadores usando as funções existentes no crud.py."""
+    global frame_ranking_seguradoras, label_resumo_bi
+
+    dias = converter_periodo_dias(campo_periodo_bi.get() if campo_periodo_bi else "")
+    status = campo_status_bi.get().strip() if campo_status_bi else ""
+
+    try:
+        clientes = crud.qtd_cliente_por_status(status)
+        cotacoes = crud.novas_cotacoes(dias)
+        apolices_novas = crud.novas_apolices(dias)
+        vencidas = crud.apolices_vencidas()
+        vencendo = crud.apolices_vencendo(dias if dias else 30)
+        ranking = crud.contrato_por_seguradora()
+
+        total_clientes = obter_numero_indicador(clientes, "qtd_status")
+        total_orcamentos = obter_numero_indicador(cotacoes, "qtd_orcamentos")
+        total_novas_apolices = obter_numero_indicador(apolices_novas, "qtd_novas_apolices")
+        total_apolices_vencidas = obter_numero_indicador(vencidas, "qtd_apolices_vencidas")
+        total_apolices_vencendo = obter_numero_indicador(vencendo, "qtd_apolices_vencendo")
+        taxa_conversao = calcular_taxa_conversao(total_novas_apolices, total_orcamentos)
+
+        periodo_txt = f"Últimos {dias} dias" if dias else "Base completa"
+        status_txt = status.capitalize()
+
+        atualizar_card_indicador("clientes_ativos", formatar_numero_indicador(total_clientes), f"Clientes com status {status_txt}")
+        atualizar_card_indicador("orcamentos", formatar_numero_indicador(total_orcamentos), f"Cotações no período: {periodo_txt}")
+        atualizar_card_indicador("novas_apolices", formatar_numero_indicador(total_novas_apolices), f"Apólices geradas no período: {periodo_txt}")
+        atualizar_card_indicador("apolices_vencidas", formatar_numero_indicador(total_apolices_vencidas), "Contratos que já passaram da vigência")
+        atualizar_card_indicador("apolices_vencendo", formatar_numero_indicador(total_apolices_vencendo), f"Contratos vencendo em até {dias if dias else 30} dias")
+        atualizar_card_indicador("taxa_conversao", f"{taxa_conversao}%", "Apólices geradas em relação às cotações")
+
+        if label_resumo_bi:
+            label_resumo_bi.configure(
+                text=(
+                    f"Análise rápida: no recorte selecionado, a corretora possui "
+                    f"{formatar_numero_indicador(total_orcamentos)} cotação(ões), "
+                    f"{formatar_numero_indicador(total_novas_apolices)} apólice(s) convertida(s) "
+                    f"e taxa aproximada de conversão de {taxa_conversao}%."
+                )
+            )
+
+        limpar_frame_dashboard(frame_ranking_seguradoras)
+
+        ctk.CTkLabel(
+            frame_ranking_seguradoras,
+            text="Contratos por seguradora",
+            font=ctk.CTkFont(family=FONTE_TITULO, size=18, weight="bold"),
+            text_color=CINZA_ESCURO,
+            anchor="w"
+        ).pack(fill="x", padx=16, pady=(14, 4))
+
+        ctk.CTkLabel(
+            frame_ranking_seguradoras,
+            text="Ranking baseado nas apólices vinculadas às cotações.",
+            font=ctk.CTkFont(family=FONTE_PADRAO, size=12),
+            text_color=TEXTO_SECUNDARIO,
+            anchor="w"
+        ).pack(fill="x", padx=16, pady=(0, 10))
+
+        if ranking:
+            maior = max([item.get("qtd_contratos", 0) for item in ranking]) or 1
+
+            for posicao, item in enumerate(ranking[:8], 1):
+                seguradora = item.get("seguradora", "Sem nome")
+                qtd = item.get("qtd_contratos", 0)
+                proporcao = qtd / maior
+
+                linha = ctk.CTkFrame(frame_ranking_seguradoras, fg_color=BRANCO, corner_radius=12)
+                linha.pack(fill="x", padx=14, pady=5)
+
+                ctk.CTkLabel(
+                    linha,
+                    text=f"{posicao}º",
+                    width=34,
+                    font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"),
+                    text_color=VERDE_INSTITUCIONAL
+                ).pack(side="left", padx=(10, 4), pady=10)
+
+                info = ctk.CTkFrame(linha, fg_color="transparent")
+                info.pack(side="left", fill="x", expand=True, padx=4, pady=8)
+
+                ctk.CTkLabel(
+                    info,
+                    text=seguradora,
+                    font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"),
+                    text_color=CINZA_ESCURO,
+                    anchor="w"
+                ).pack(fill="x")
+
+                barra_fundo = ctk.CTkFrame(info, fg_color="#E2E8F0", height=7, corner_radius=10)
+                barra_fundo.pack(fill="x", pady=(6, 0))
+                barra_fundo.pack_propagate(False)
+
+                barra = ctk.CTkFrame(barra_fundo, fg_color=VERDE_INSTITUCIONAL, height=7, corner_radius=10)
+                barra.place(relx=0, rely=0, relwidth=proporcao, relheight=1)
+
+                ctk.CTkLabel(
+                    linha,
+                    text=f"{qtd}",
+                    width=42,
+                    font=ctk.CTkFont(family=FONTE_TITULO, size=18, weight="bold"),
+                    text_color=CINZA_ESCURO
+                ).pack(side="right", padx=(4, 12), pady=10)
+        else:
+            ctk.CTkLabel(
+                frame_ranking_seguradoras,
+                text="Nenhuma seguradora com contrato encontrado.",
+                font=ctk.CTkFont(family=FONTE_PADRAO, size=13),
+                text_color=TEXTO_SECUNDARIO
+            ).pack(padx=16, pady=20)
+
+    except Exception as erro:
+        if label_resumo_bi:
+            label_resumo_bi.configure(text=f"Erro ao carregar os indicadores: {erro}")
+
+
+def mostrar_dashboard_bi():
+    """Monta um dashboard B.I. completo usando as consultas criadas no crud.py."""
+    global campo_periodo_bi, campo_status_bi, frame_ranking_seguradoras, label_resumo_bi
+    global cards_indicadores, cards_descricoes
+
+    cards_indicadores = {}
+    cards_descricoes = {}
+
+    for componente in frame_conteudo.winfo_children():
+        componente.destroy()
+
+    frame_conteudo.configure(fg_color=CINZA_CLARO)
+
+    dashboard = ctk.CTkFrame(frame_conteudo, fg_color=CINZA_CLARO)
+    dashboard.pack(fill="both", expand=True, padx=18, pady=14)
+
+    # Cabeçalho
+    header = ctk.CTkFrame(
+        dashboard,
+        fg_color=VERDE_ESCURO,
+        corner_radius=22,
+        border_width=1,
+        border_color=VERDE_INSTITUCIONAL
+    )
+    header.pack(fill="x", pady=(0, 14))
+
+    texto_header = ctk.CTkFrame(header, fg_color="transparent")
+    texto_header.pack(side="left", fill="both", expand=True, padx=22, pady=16)
+
+    ctk.CTkLabel(
+        texto_header,
+        text="Dashboard B.I.",
+        font=ctk.CTkFont(family=FONTE_TITULO, size=28, weight="bold"),
+        text_color=BRANCO,
+        anchor="w"
+    ).pack(fill="x")
+
+    ctk.CTkLabel(
+        texto_header,
+        text="Indicadores gerenciais da Frank Costa Corretora de Seguros",
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=13),
+        text_color="#E6FFFA",
+        anchor="w"
+    ).pack(fill="x", pady=(4, 0))
+
+    filtros = ctk.CTkFrame(header, fg_color="transparent")
+    filtros.pack(side="right", padx=18, pady=14)
+
+    ctk.CTkLabel(
+        filtros,
+        text="Período em dias",
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=11, weight="bold"),
+        text_color="#C6F6D5"
+    ).grid(row=0, column=0, sticky="w", padx=4)
+
+    campo_periodo_bi = ctk.CTkEntry(
+        filtros,
+        width=95,
+        height=34,
+        corner_radius=10,
+        placeholder_text="30",
+        fg_color=BRANCO,
+        text_color=CINZA_ESCURO,
+        border_color=VERDE_CLARO
+    )
+    campo_periodo_bi.grid(row=1, column=0, padx=4, pady=(2, 0))
+    campo_periodo_bi.insert(0, "30")
+
+    ctk.CTkLabel(
+        filtros,
+        text="Status cliente",
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=11, weight="bold"),
+        text_color="#C6F6D5"
+    ).grid(row=0, column=1, sticky="w", padx=4)
+
+    campo_status_bi = ctk.CTkEntry(
+        filtros,
+        width=110,
+        height=34,
+        corner_radius=10,
+        placeholder_text="Ativo",
+        fg_color=BRANCO,
+        text_color=CINZA_ESCURO,
+        border_color=VERDE_CLARO
+    )
+    campo_status_bi.grid(row=1, column=1, padx=4, pady=(2, 0))
+    campo_status_bi.insert(0, "Ativo")
+
+    ctk.CTkButton(
+        filtros,
+        text="Atualizar",
+        width=92,
+        height=34,
+        corner_radius=10,
+        fg_color=DOURADO_PREMIUM,
+        hover_color="#B8941F",
+        text_color="#1A202C",
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"),
+        command=atualizar_dashboard_bi
+    ).grid(row=1, column=2, padx=(8, 0), pady=(2, 0))
+
+    # Corpo do dashboard
+    corpo = ctk.CTkFrame(dashboard, fg_color="transparent")
+    corpo.pack(fill="both", expand=True)
+
+    esquerda = ctk.CTkFrame(corpo, fg_color="transparent")
+    esquerda.pack(side="left", fill="both", expand=True, padx=(0, 12))
+
+    direita = ctk.CTkFrame(
+        corpo,
+        fg_color="#EEF6F1",
+        corner_radius=20,
+        border_width=1,
+        border_color=BORDA_SUAVE,
+        width=330
+    )
+    direita.pack(side="right", fill="both", expand=False)
+    direita.pack_propagate(False)
+
+    # Cards principais
+    cards = ctk.CTkFrame(esquerda, fg_color="transparent")
+    cards.pack(fill="x")
+
+    cards.grid_columnconfigure(0, weight=1)
+    cards.grid_columnconfigure(1, weight=1)
+    cards.grid_columnconfigure(2, weight=1)
+
+    criar_card_indicador(cards, "clientes_ativos", "Clientes", "0", "Clientes com status ativo", VERDE_INSTITUCIONAL, 0, 0)
+    criar_card_indicador(cards, "orcamentos", "Orçamentos", "0", "Cotações no período", "#3182CE", 0, 1)
+    criar_card_indicador(cards, "novas_apolices", "Novas Apólices", "0", "Contratos gerados", DOURADO_PREMIUM, 0, 2)
+    criar_card_indicador(cards, "apolices_vencidas", "Apólices Vencidas", "0", "Contratos fora da vigência", VERMELHO_ERRO, 1, 0)
+    criar_card_indicador(cards, "apolices_vencendo", "Apólices Vencendo", "0", "Contratos próximos do fim", "#DD6B20", 1, 1)
+    criar_card_indicador(cards, "taxa_conversao", "Conversão", "0%", "Apólices sobre cotações", VERDE_CLARO, 1, 2)
+
+    # Painel de análise
+    analise = ctk.CTkFrame(
+        esquerda,
+        fg_color=BRANCO,
+        corner_radius=20,
+        border_width=1,
+        border_color=BORDA_SUAVE
+    )
+    analise.pack(fill="both", expand=True, pady=(12, 0))
+
+    ctk.CTkLabel(
+        analise,
+        text="Leitura gerencial",
+        font=ctk.CTkFont(family=FONTE_TITULO, size=18, weight="bold"),
+        text_color=CINZA_ESCURO,
+        anchor="w"
+    ).pack(fill="x", padx=18, pady=(16, 4))
+
+    label_resumo_bi = ctk.CTkLabel(
+        analise,
+        text="Clique em Atualizar para carregar a análise dos indicadores.",
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=13),
+        text_color=TEXTO_SECUNDARIO,
+        anchor="w",
+        justify="left",
+        wraplength=560
+    )
+    label_resumo_bi.pack(fill="x", padx=18, pady=(0, 12))
+
+    ctk.CTkLabel(
+        analise,
+        text=(
+            "Este painel reúne os principais dados operacionais: clientes ativos, "
+            "orçamentos realizados, apólices convertidas, contratos vencidos, "
+            "contratos próximos do vencimento e desempenho por seguradora."
+        ),
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=12),
+        text_color=TEXTO_SECUNDARIO,
+        anchor="w",
+        justify="left",
+        wraplength=560
+    ).pack(fill="x", padx=18, pady=(0, 16))
+
+    # Ranking lateral
+    frame_ranking_seguradoras = ctk.CTkScrollableFrame(
+        direita,
+        fg_color="transparent",
+        corner_radius=18
+    )
+    frame_ranking_seguradoras.pack(fill="both", expand=True, padx=8, pady=8)
+
+    atualizar_dashboard_bi()
 
 # ============= FUNÇÃO DE CONFIRMAÇÃO DO CRUD =============
 
@@ -632,7 +955,7 @@ def confirma_crud():
                 return
 
     # Exibe a mensagem de sucesso inline diretamente na tela da direita (Fixado)
-    mostrar_mensagem_inline(mensagem_alerta, VERDE_INSTITUCIONAL)
+    mostrar_mensagem_inline(mensagem_alerta, BRANCO)
 
 
 # ============= CONSTRUÇÃO DINÂMICA DOS CAMPOS DO FORMULÁRIO =============
@@ -869,6 +1192,8 @@ frame_botoes_crud = None
 def montar_estrutura_painel(nome):
     global frame_botoes_crud, frame_zona_inputs, label_erro_crud, label_mensagem
 
+    frame_conteudo.configure(fg_color=CINZA_CLARO)
+
     for componente in frame_conteudo.winfo_children():
         componente.destroy()
 
@@ -901,103 +1226,28 @@ def montar_estrutura_painel(nome):
     frame_zona_inputs.pack(fill="both", expand=True, pady=5)
 
     # ---------------- COLUNA DIREITA (Visualizador Fixo de Respostas) ----------------
-    frame_direita = ctk.CTkScrollableFrame(frame_divisao, fg_color="#52ABB8", width=340, height=430, corner_radius=16)
+    frame_direita = ctk.CTkScrollableFrame(frame_divisao, fg_color=VERDE_INSTITUCIONAL, width=300, height=400, corner_radius=16, border_width=1, border_color=BORDA_SUAVE)
     frame_direita.pack(side="right", fill="both", expand=False, padx=(5, 0))
 
     ctk.CTkLabel(
         frame_direita, 
-        text=" RETORNO / CONSULTA", 
-        font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), 
-        text_color="black"
+        text="CONSULTA", 
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=16, weight="bold"),  
+        text_color=BRANCO
     ).pack(pady=(12, 12))
 
     # O label fixo agora fica dentro da janela da direita com rolagem automática se o texto for enorme
     label_mensagem = ctk.CTkLabel(
         frame_direita, 
         text="Aguardando ação ou busca...", 
-        font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="normal"), 
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="normal"), 
         justify="left", 
         wraplength=310,
-        text_color="black"
+        text_color=BRANCO
     )
     label_mensagem.pack(pady=5, padx=12, fill="both", expand=True)
 
 
-# ======== SEÇÃO: VISUAL DO DASHBOARD B.I. LADO A LADO ======
-
-def mostrar_dashboard_bi():
-    global label_mensagem
-    
-    for componente in frame_conteudo.winfo_children():
-        componente.destroy()
-
-    # Título principal do Dashboard de B.I.
-    ctk.CTkLabel(
-        frame_conteudo, 
-        text=" PAINEL ESTRATÉGICO - B.I.", 
-        font=ctk.CTkFont(family=FONTE_TITULO, size=22, weight="bold"),
-        text_color="black"
-    ).pack(pady=(20, 4))
-
-    ctk.CTkLabel(
-        frame_conteudo, 
-        text="Consultas Analíticas de Big Data ", 
-        font=ctk.CTkFont(family=FONTE_PADRAO, size=13),
-        text_color="black"
-    ).pack(pady=(0, 15))
-
-    # Container principal de divisão do B.I.
-    painel_bi = ctk.CTkFrame(frame_conteudo, fg_color="transparent")
-    painel_bi.pack(fill="both", expand=True, padx=15, pady=5)
-
-    # ---------------- ESQUERDA: Botões de Filtros Analíticos ----------------
-    painel_bi_esquerda = ctk.CTkFrame(painel_bi, fg_color="transparent")
-    painel_bi_esquerda.pack(side="left", fill="both", expand=True, padx=(0, 15))
-
-    ctk.CTkLabel(painel_bi_esquerda, text="SELECIONE O INDICADOR:", font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO).pack(pady=5, anchor="w")
-
-    ctk.CTkButton(
-        painel_bi_esquerda, text=" Ganhos\n(Faturamento Comercial)", width=220, height=52, corner_radius=12,
-        fg_color="#27ae60", hover_color="#2ecc71", font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"),
-        command=bi_faturamento_clicado
-    ).pack(pady=6, fill="x")
-
-    ctk.CTkButton(
-        painel_bi_esquerda, text=" Desempenho das Seguradoras)", width=220, height=52, corner_radius=12,
-        fg_color="#2980b9", hover_color="#3498db", font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"),
-        command=bi_seguradoras_clicado
-    ).pack(pady=6, fill="x")
-
-    ctk.CTkButton(
-        painel_bi_esquerda, text=" Metas e Alertas de Renovações", width=220, height=52, corner_radius=12,
-        fg_color="#d35400", hover_color="#e67e22", font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"),
-        command=bi_renovacoes_clicado
-    ).pack(pady=6, fill="x")
-
-    ctk.CTkButton(
-        painel_bi_esquerda, text=" Potencial  de Clientes", width=220, height=52, corner_radius=12,
-        fg_color="#8e44ad", hover_color="#9b59b6", font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"),
-        command=bi_clientes_clicado
-    ).pack(pady=6, fill="x")
-
-    # ---------------- DIREITA: Monitor de exibição dos relatórios de B.I. ----------------
-    painel_bi = ctk.CTkScrollableFrame(painel_bi, fg_color="#52ABB8", width=380, height=390, corner_radius=16)
-    painel_bi.pack(side="right", fill="both", expand=True)
-
-    ctk.CTkLabel(
-        painel_bi, text=" RELATÓRIO EXTRAÍDO ", 
-        font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color="black"
-    ).pack(pady=(12, 15))
-
-    label_mensagem = ctk.CTkLabel(
-        painel_bi, 
-        text="Selecione um indicador estratégico à esquerda para extrair as métricas em tempo real do PostgreSQL.", 
-        font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="normal"), 
-        justify="left", 
-        wraplength=340,
-        text_color="black"
-    )
-    label_mensagem.pack(pady=10, padx=12, fill="both", expand=True)
 
 
 # =========+==== SEÇÕES DE CHAMADAS DO MENU LATERAL ++
@@ -1058,8 +1308,9 @@ ctk.CTkButton(
     width=175, 
     height=42, 
     corner_radius=10,
-    fg_color="#024d0d", 
-    hover_color="#17b978", 
+    fg_color=DOURADO_PREMIUM, 
+    hover_color="#B8941F", 
+    text_color="#1A202C",
     font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), 
     command=mostrar_dashboard_bi
 ).pack(pady=12, padx=14)
@@ -1067,7 +1318,7 @@ ctk.CTkButton(
 # Espaçador interno para empurrar o botão Sair para baixo
 ctk.CTkLabel(frame_lateral, text="").pack(fill="both", expand=True)
 
-ctk.CTkButton(frame_lateral, text=" LOGOUT / SAIR", anchor="w", width=175, height=40, corner_radius=10, fg_color=VERMELHO_ERRO, hover_color=VERMELHO_HOVER, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=fechar_login).pack(pady=15, padx=14)
+ctk.CTkButton(frame_lateral, text=" LOGOUT/SAIR", anchor="w", width=175, height=40, corner_radius=10, fg_color=VERMELHO_ERRO, hover_color=VERMELHO_HOVER, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=fechar_login).pack(pady=15, padx=14)
 
 
 # Inicializa a execução da janela do Tkinter
