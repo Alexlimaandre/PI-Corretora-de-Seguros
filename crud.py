@@ -1206,4 +1206,188 @@ def contrator_por_seguradora():
     except Exception as e:
         conn.rollback()
         print("Erro ao buscar indicador de contratantes por seguradora:", e)
+        return None     
+ 
+#            PONTES E CONEXÕES DO DASHBOARD DE B.I. 
+
+def bi_indicador_ganhos_conversao():
+    """
+    CARREGA  O VOLUME COMERCIAL, TAXA DE CONVERSÃO E FATURAMENTO POR TIPO.
+   NÚMERO DE ORCAMENTO , CONVERTIDOS, FATURAMENTO TOTAL E POR TIPO DE CONTRATO/BEM
+    """
+    try:
+        # 1. Total de orçamentos e convertidos (Últimos 30 dias)
+        orcamentos = novas_cotacoes(30)
+        total_orcamentos = orcamentos["qtd_orcamentos"] if orcamentos else 0
+
+        cursor.execute("""
+            SELECT COUNT(*) FROM Apolice
+            WHERE inicio >= CURRENT_DATE - INTERVAL '30 DAY';
+        """)
+        total_convertidos = cursor.fetchone()[0]
+
+        taxa_conversao = 0.0
+        if total_orcamentos > 0:
+            taxa_conversao = (total_convertidos / total_orcamentos) * 100
+
+        # 2. FATURAMENTO TOTAL (Soma de todas as cotações que viraram apólices)
+        cursor.execute("""
+            SELECT COALESCE(SUM(c.valor_cotacao), 0) 
+            FROM cotacoes c
+            JOIN apolice a USING (id_cotacao);
+        """)
+        faturamento_total = cursor.fetchone()[0]
+
+        # 3. FATURAMENTO POR TIPO DE CONTRATO / BEM
+        cursor.execute("""
+            SELECT COALESCE(b.tipo_bem, 'Não Especificado') AS tipo, SUM(c.valor_cotacao) AS total
+            FROM cotacoes c
+            JOIN apolice a USING (id_cotacao)
+            LEFT JOIN bens b USING (id_pessoa)
+            GROUP BY b.tipo_bem
+            ORDER BY total DESC;
+        """)
+        faturamento_por_tipo = cursor.fetchall()
+
+        return {
+            "total_orcamentos": total_orcamentos,
+            "total_convertidos": total_convertidos,
+            "taxa_conversao": round(taxa_conversao, 2),
+            "faturamento_total": float(faturamento_total),
+            "faturamento_por_tipo": faturamento_por_tipo
+        }
+    except Exception as e:
+        conn.rollback()
+        print("Erro no BI Ganhos:", e)
         return None
+
+
+def bi_ranking_seguradoras():
+    """
+    TRÁS O RANKING DE CONTRATOS E TRAZ A MARGEM DE LUCRO  POR SEGURADORA .
+
+    """
+    try:
+        # Traz o nome, quantidade de contratos e a margem acumulada (simulando 15% de comissão média sobre as apólices)
+        cursor.execute("""
+            SELECT 
+                s.nome_fantasia AS seguradora, 
+                COUNT(a.id_apolice) AS total_contratos,
+                COALESCE(SUM(c.valor_cotacao) * 0.15, 0) AS margem_lucro
+            FROM apolice a
+            JOIN cotacoes c USING (id_cotacao)
+            JOIN seguradora s USING (id_seguradora)
+            GROUP BY s.nome_fantasia
+            ORDER BY total_contratos DESC;
+        """)
+        resultados = cursor.fetchall()
+        
+        ranking = []
+        for linha in resultados:
+            ranking.append({
+                "seguradora": linha[0],
+                "total_contratos": linha[1],
+                "margem_lucro": float(linha[2])
+            })
+        return ranking
+    except Exception as e:
+        conn.rollback()
+        print("Erro no BI Seguradoras:", e)
+        return []
+
+
+def bi_clientes_vencidos_e_vencendo():
+    """
+    Busca os contratos urgentes e calcula o número de apólices renovadas na carteira.
+    FAZ  ALERTA DE CONTRATOS VENCENDO E NÚMERO DE APÓLICES RENOVADES
+    """
+    relatorio = {"vencidos": [], "vencendo": [], "renovados": 0}
+    try:
+        # 1. Contratos já vencidos
+        cursor.execute("""
+            SELECT a.id_apolice, p.nome_completo, p.telefone, a.fim
+            FROM apolice a
+            JOIN cotacoes c USING (id_cotacao)
+            JOIN pessoa p USING (id_pessoa)
+            WHERE a.fim < CURRENT_DATE
+            ORDER BY a.fim ASC;
+        """)
+        for linha in cursor.fetchall():
+            relatorio["vencidos"].append({
+                "id_apolice": linha[0],
+                "cliente": linha[1],
+                "telefone": linha[2],
+                "data_vencimento": str(linha[3])
+            })
+
+        # 2. Próximos 10 dias
+        cursor.execute("""
+            SELECT a.id_apolice, p.nome_completo, p.telefone, a.fim
+            FROM apolice a
+            JOIN cotacoes c USING (id_cotacao)
+            JOIN pessoa p USING (id_pessoa)
+            WHERE a.fim BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '10 DAY'
+            ORDER BY a.fim ASC;
+        """)
+        for linha in cursor.fetchall():
+            relatorio["vencendo"].append({
+                "id_apolice": linha[0],
+                "cliente": linha[1],
+                "telefone": linha[2],
+                "data_vencimento": str(linha[3])
+            })
+
+        # 3. Métrica de Apólices Renovadas (Simulação baseada em clientes recorrentes com mais de uma cotação ativa)
+        cursor.execute("""
+            SELECT COUNT(*) FROM apolice 
+            WHERE id_cotacao IN (
+                SELECT id_cotacao FROM cotacoes WHERE status_cotacao ILIKE '%renovado%' OR valor_cotacao > 0
+            ) AND inicio >= CURRENT_DATE - INTERVAL '1 YEAR';
+        """)
+        relatorio["total_renovadas"] = cursor.fetchone()[0]
+
+        return relatorio
+    except Exception as e:
+        conn.rollback()
+        print("Erro no BI Renovações:", e)
+        return relatorio
+    
+
+def bi_potencial_clientes():
+    """
+    TRÁS OS VALORES DE TODOS OS BENS ADMINISTRADOS PELA CORRETORA.
+    GARANTE TRATAR OS ERROS E VALORES NULOS DO POSTGRESQL.
+    """
+    try:
+        # 1. Busca a distribuição de clientes por status
+        cursor.execute("""
+            SELECT COALESCE(status, 'Sem Status'), COUNT(*) 
+            FROM pessoa 
+            GROUP BY status;
+        """)
+        status_resumo = cursor.fetchall()
+
+        # 2. Busca o valor total do patrimônio protegido nos bens
+        cursor.execute("""
+            SELECT COALESCE(SUM(valor_estimado), 0) 
+            FROM bens;
+        """)
+        resultado_bens = cursor.fetchone()
+        total_protegido = float(resultado_bens[0]) if resultado_bens else 0.0
+
+        # Se o banco retornar vazio para os status, cria um padrão para não quebrar a tela
+        if not status_resumo:
+            status_resumo = [("Ativo", 0)]
+
+        return {
+            "status_resumo": status_resumo,
+            "total_protegido": total_protegido
+        }
+    except Exception as e:
+        conn.rollback()
+        print("Erro no BI Clientes:", e)
+        # Retorna painel padrão se d der erro pra não ficar em branco
+        return {
+            "status_resumo": [("Erro ao carregar", 0)],
+            "total_protegido": 0.0
+        }    

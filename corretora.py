@@ -28,7 +28,7 @@ FONTE_PADRAO = "Inter"
 
 janela = ctk.CTk()                         # janela principal do sistema
 janela.title("Corretora de Seguros")       # título da janela
-janela.geometry("980x720")                 # tamanho da janela
+janela.geometry("1020x720")                # largura levemente ajustada para as duas colunas
 janela.configure(fg_color=CINZA_CLARO)      # fundo geral corporativo
 
 # ========== FUNÇÕES DE LIMITE DE TAMANHO =============
@@ -126,7 +126,7 @@ ctk.CTkLabel(frame_topbar, text="Sistema de Gestão Comercial", font=ctk.CTkFont
 def fechar_login():                                             # fecha o menu e volta para a tela de login
     frame_menu.pack_forget()
     frame_lateral.pack_forget()
-    frame_login.pack(pady=20, padx=40, fill="both", expand=True)
+    frame_login.pack(pady=45, padx=90, fill="both", expand=True)
     entry_user.delete(0, "end")
     entry_pass.delete(0, "end")
 
@@ -198,28 +198,105 @@ def data_banco_para_br(data_banco):
 # ============= FUNÇÃO DE MENSAGEM INLINE =============
 
 def mostrar_mensagem_inline(mensagem, cor=VERDE_INSTITUCIONAL):
-    """Exibe mensagem de resultado diretamente no painel, abaixo do formulário."""
+    """Exibe mensagem de resultado diretamente no painel fixo da direita."""
     global label_mensagem
     if label_mensagem:
         if mensagem:
-            label_mensagem.configure(text=mensagem, text_color=cor, fg_color=BRANCO, corner_radius=14)
+            label_mensagem.configure(text=mensagem, text_color=cor)
         else:
-            label_mensagem.configure(text="", fg_color="transparent")
+            label_mensagem.configure(text="Aguardando ação ou busca...")
 
 
 # ============= FUNÇÕES DE CLIQUE PARA OS BOTÕES DE B.I. =============
 
 def bi_faturamento_clicado():
-    mostrar_mensagem_inline("A processar indicador de Ganhos: Carregando Faturamento Acumulado da carteira...", "lightblue")
+    """Chama o indicador de Ganhos do crud.py e exibe na coluna da direita."""
+    dados = crud.bi_indicador_ganhos_conversao()
+    if dados:
+        texto = (
+            f" INDICADOR DE GANHOS E CONVERSÃO\n"
+            f" Orçamentos Totais (Últimos 30 dias): {dados['total_orcamentos']}\n"
+            f" Apólices Convertidas (Últimos 30 dias): {dados['total_convertidos']}\n\n"
+            f" Taxa de Conversão Comercial: {dados['taxa_conversao']}%\n\n"
+            f"Métrica de B.I.: Avalia a eficiência da equipe de vendas "
+            f"em transformar cotações brutas em contratos ativos."
+        )
+        mostrar_mensagem_inline(texto,"black")
+    else:
+        mostrar_mensagem_inline("Erro ao extrair dados de faturamento.", VERMELHO_ERRO)
+
 
 def bi_seguradoras_clicado():
-    mostrar_mensagem_inline("A processar indicador de Desempenho: Calculando Ranking de Vendas por Seguradora...", "lightblue")
+    """Chama o indicador de Desempenho do crud.py e exibe na coluna da direita."""
+    ranking = crud.bi_ranking_seguradoras()
+    if ranking:
+        texto = (
+            f" DESEMPENHO POR SEGURADORA \n"
+          
+        )
+        for i, item in enumerate(ranking, 1):
+            texto += f"{i}º - {item['seguradora']}\n     Contratos Fechados: {item['total_contratos']} apólices\n\n"
+        
+        texto += (
+            f"Métrica de B.I.: Identifica quais seguradoras parceiras "
+            f"possuem maior penetração na carteira da corretora para fins "
+            f"de negociação de melhores comissões."
+        )
+        mostrar_mensagem_inline(texto, "black")
+    else:
+        mostrar_mensagem_inline("Nenhum contrato localizado por seguradora.", VERMELHO_ERRO)
+
 
 def bi_renovacoes_clicado():
-    mostrar_mensagem_inline("A processar indicador de Metas: Buscando apólices com término nos próximos 30 dias...", "lightblue")
+    """Chama o indicador de Metas do crud.py e exibe na coluna da direita."""
+    dados = crud.bi_clientes_vencidos_e_vencendo()
+    
+    texto = (
+        f" INDICADOR DE METAS E ALERTAS DE RENOVAÇÕES\n"
+      
+    )
+    
+    texto += " CONTRATOS JÁ VENCIDOS LIGAR COM URGENCIA:\n"
+    if dados["vencidos"]:
+        for item in dados["vencidos"]:
+            texto += f"• Cliente: {item['cliente']}\n  Tel: {item['telefone']} | Apólice: {item['id_apolice']}\n"
+    else:
+        texto += "Nenhum contrato vencido pendente.\n"
+        
+    texto += "ENCIMENTO NOS PRÓXIMOS 10 DIAS :\n"
+    if dados["vencendo"]:
+        for item in dados["vencendo"]:
+            texto += f"• Cliente: {item['cliente']}\n  Tel: {item['telefone']} | Vence em: {item['data_vencimento']}\n"
+    else:
+        texto += "Nenhuma apólice vencendo nos próximos 10 dias.\n"
+        
+    texto += (
+        f"\nMétrica de B.I.: Ação preventiva focada em retenção de clientes "
+        f"e cumprimento de metas de renovação da carteira."
+    )
+    mostrar_mensagem_inline(texto, "BLACK")
+
 
 def bi_clientes_clicado():
-    mostrar_mensagem_inline("A processar indicador de Potencial: Analisando dados demográficos dos clientes ativos...", "lightblue")
+    """Chama o indicador de Potencial da carteira no crud.py."""
+    dados = crud.bi_potencial_clientes()
+    if dados:
+        texto = (
+            f" POTENCIAL E SAÚDE DA CARTEIRA\n"
+            f" Patrimônio Total Protegido (Soma dos Bens):\n"
+            f"   R$ {dados['total_protegido']:.2f}\n\n"
+            f" Distribuição de Clientes por Situação:\n"
+        )
+        for resumo in dados["status_resumo"]:
+            texto += f"   • Status [{resumo[0]}]: {resumo[1]} pessoa(s)\n"
+            
+        texto += (
+            f"\nMétrica de B.I.: Mede a exposição total de risco gerenciado "
+            f"pela corretora e o volume volumétrico de clientes."
+        )
+        mostrar_mensagem_inline(texto, "#8e44ad")
+    else:
+        mostrar_mensagem_inline("Erro ao analisar potencial da carteira.", VERMELHO_ERRO)
 
 
 # ============= FUNÇÃO DE CONFIRMAÇÃO DO CRUD =============
@@ -303,7 +380,7 @@ def confirma_crud():
                     f"Status: {cliente['status']}"
                 )
             else:
-                label_erro_crud.configure(text="Nenhum cliente localizado!", text_color="#e74c3c")
+                label_erro_crud.configure(text="Nenhum cliente localizado!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Atualizar":
@@ -394,10 +471,9 @@ def confirma_crud():
             if plano:
                 mensagem_alerta = (
                     f"Plano localizado!\n\n"
-                    f"ID do Plano: {plano['id_plano']}\n"
-                    f"ID da Seguradora: {plano['id_seguradora']}\n"
+                    f"ID Plano: {plano['id_plano']}\n"
+                    f"ID Seguradora: {plano['id_seguradora']}\n"
                     f"Nome do Plano: {plano['nome_plano']}\n"
-                    f"Nome da Seguradora: {plano['seguradora']}\n"
                     f"Tipo Cobertura: {plano['cobertura']}"
                 )
             else:
@@ -407,7 +483,7 @@ def confirma_crud():
         elif chamar_acao == "Atualizar":
             sucesso = crud.update_plano(v1, v2, v3, v4)
             if sucesso:
-                mensagem_alerta = "Plano atualizado com sucesso!"
+                mensagem_alerta = "Plano updated com sucesso!"
             else:
                 label_erro_crud.configure(text="ID de plano não encontrado!", text_color=VERMELHO_ERRO)
                 return
@@ -439,7 +515,7 @@ def confirma_crud():
                 mensagem_alerta = (
                     f"Bem encontrado!\n\n"
                     f"ID Bem: {bem['id_bem']}\n"
-                    f"ID Cliente: {bem['id_pessoa']}\n"
+                    f"ID Pessoa: {bem['id_pessoa']}\n"
                     f"Tipo do Bem: {bem['tipo_bem']}\n"
                     f"Descrição: {bem['descricao_bem']}\n"
                     f"Valor Estimado: R$ {bem['valor_estimado']}"
@@ -458,7 +534,7 @@ def confirma_crud():
 
         elif chamar_acao == "Remover":
             sucesso = crud.delete_bem(v1)
-            if  sucesso:
+            if sucesso:
                 mensagem_alerta = "Bem removido com sucesso!"
             else:
                 label_erro_crud.configure(text="Nenhum bem encontrado para exclusão!", text_color=VERMELHO_ERRO)
@@ -482,20 +558,20 @@ def confirma_crud():
             if apolice:
                 mensagem_alerta = (
                     f"Apólice encontrada!\n\n"
-                    f"ID Apólice: {apolice['id_apolice']}\n"
+                    f"Nº Apólice: {apolice['id_apolice']}\n"
                     f"ID Cotação: {apolice['id_cotacao']}\n"
                     f"Cliente: {apolice['cliente']}\n"
-                    f"Plano: R$ {apolice['plano']}\n"
-                    f"Valor Cotação: R$ {apolice['valor']}"
-                    f"Inicio Vigência: {data_banco_para_br(apolice['inicio'])}\n"
-                    f"Fim Vigência: {data_banco_para_br(apolice['fim'])}"
+                    f"Seguradora: {apolice['seguradora']}\n"
+                    f"Plano: {apolice['plano']}\n"
+                    f"Valor: R$ {apolice['valor']}\n"
+                    f"Vigência: {data_banco_para_br(apolice['inicio'])} até {data_banco_para_br(apolice['fim'])}"
                 )
             else:
                 label_erro_crud.configure(text="Apólice não localizada!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Atualizar":
-            sucesso = crud.update_apolice(v1, v2, v3, v4, v5)
+            sucesso = crud.update_apolice(v1, v2, v3)
             if sucesso:
                 mensagem_alerta = "Apólice modificada com sucesso!"
             else:
@@ -511,58 +587,55 @@ def confirma_crud():
                 return
 
 
-    # ====== CRUD DE VENDAS ======
+    # ====== CRUD DE VENDAS (Mapeado para Cotações no seu novo banco) ======
 
     elif painel_usado == "Vendas":
 
         if chamar_acao == "Acrescentar":
-            v4_banco = data_br_para_banco(v4)                   # data de vigência inicio
-            v5_banco = data_br_para_banco(v5)                   # data de vigência fim
-            sucesso = crud.create_venda(v1, v2, v3, v4_banco, v5_banco)
+            sucesso = crud.create_cotacao(v1, v2, v3, v4, data_br_para_banco(v5))
             if sucesso:
-                mensagem_alerta = "Venda concluída com sucesso!"
+                mensagem_alerta = "Cotação registrada com sucesso!"
             else:
-                label_erro_crud.configure(text="Erro ao registrar venda.", text_color=VERMELHO_ERRO)
+                label_erro_crud.configure(text="Erro ao registrar cotação.", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Pesquisar":
-            venda = crud.read_venda_por_id(v1)
+            venda = crud.read_cotacao(v1)
             if venda:
                 mensagem_alerta = (
-                    f"Registro de Venda Encontrado!\n\n"
-                    f"ID Venda: {venda['id_venda']}\n"
-                    f"Nº Apólice: {venda['id_apolice']}\n"
-                    f"CPF Cliente: {venda['cpf_cnpj']}\n"
-                    f"Vigência Início: {data_banco_para_br(venda['data_vigencia_inicio'])}\n"
-                    f"Vigência Fim: {data_banco_para_br(venda['data_vigencia_fim'])}"
+                    f"Registro de Cotação Encontrado!\n\n"
+                    f"ID Cotação: {venda['c.id_cotacao']}\n"
+                    f"Cliente: {venda['p.nome_pessoa']}\n"
+                    f"Seguradora: {venda['s.nome_fantasia']}\n"
+                    f"Plano: {venda['plano']}\n"
+                    f"Valor Cotação: R$ {venda['c.valor_cotacao']}\n"
+                    f"Data: {data_banco_para_br(venda['c.data_cotacao'])}"
                 )
             else:
-                label_erro_crud.configure(text="ID de venda inexistente!", text_color=VERMELHO_ERRO)
+                label_erro_crud.configure(text="ID de cotação inexistente!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Atualizar":
-            v4_banco = data_br_para_banco(v4) if v4 else ""
-            v5_banco = data_br_para_banco(v5) if v5 else ""
-            sucesso = crud.update_venda(v1, v2, v3, v4_banco, v5_banco)
+            sucesso = crud.update_cotacao(v1, v2, v3, v4, v5, v6)
             if sucesso:
-                mensagem_alerta = "Informações da venda atualizadas!"
+                mensagem_alerta = "Informações da cotação atualizadas!"
             else:
-                label_erro_crud.configure(text="ID da venda não localizado!", text_color=VERMELHO_ERRO)
+                label_erro_crud.configure(text="ID da cotação não localizado!", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Remover":
-            sucesso = crud.delete_venda(v1)
+            sucesso = crud.delete_cotacao(v1)
             if sucesso:
-                mensagem_alerta = "Venda removida com sucesso!"
+                mensagem_alerta = "Cotação removida com sucesso!"
             else:
-                label_erro_crud.configure(text="Nenhum registro de venda correspondente para remover.", text_color=VERMELHO_ERRO)
+                label_erro_crud.configure(text="Nenhum registro correspondente para remover.", text_color=VERMELHO_ERRO)
                 return
 
-    # Exibe a mensagem de sucesso inline diretamente na tela sem pop-up externo
+    # Exibe a mensagem de sucesso inline diretamente na tela da direita (Fixado)
     mostrar_mensagem_inline(mensagem_alerta, VERDE_INSTITUCIONAL)
 
 
-# ====== === CONSTRUÇÃO DINÂMICA DOS CAMPOS DO FORMULÁRIO    =========
+# ============= CONSTRUÇÃO DINÂMICA DOS CAMPOS DO FORMULÁRIO =============
 
 def gerar_campos_formulario(acao, nome_secao):
     global campo1_ativo, campo2_ativo, campo3_ativo, campo4_ativo
@@ -582,7 +655,6 @@ def gerar_campos_formulario(acao, nome_secao):
         text_color=VERDE_INSTITUCIONAL
     ).pack(pady=(0, 15))
 
-    # Variáveis locais para configuração dinâmica das Labels e Placeholders
     lbl1, placeholder1, validador1 = None, None, None
     lbl2, placeholder2, validador2 = None, None, None
     lbl3, placeholder3, validador3 = None, None, None
@@ -591,7 +663,6 @@ def gerar_campos_formulario(acao, nome_secao):
     lbl6, placeholder6, validador6 = None, None, None
     lbl7, placeholder7, validador7 = None, None, None
 
-    # Redefine referências globais de inputs
     campo1_ativo = campo2_ativo = campo3_ativo = campo4_ativo = None
     campo5_ativo = campo6_ativo = campo7_ativo = None
 
@@ -602,7 +673,7 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl2, placeholder2, validador2 = "Nome Completo:", "Filtrar por Nome", None
             lbl5, placeholder5, validador5 = "Telefone:", "Filtrar por Telefone (DDD + Número)", validador_telefone
         elif acao == "Remover":
-            lbl1, placeholder1, validador1 = "ID do Cliente:", "Digite o ID do cliente para remover", validador_cpf
+            lbl1, placeholder1, validador1 = "ID do Cliente:", "Digite o ID do cliente para remover", None
         elif acao == "Atualizar":
             lbl1, placeholder1, validador1 = "CPF / CNPJ (Obrigatório):", "CPF do cliente que deseja alterar", validador_cpf
             lbl2, placeholder2, validador2 = "Nome Completo:", "Novo nome ou mantenha vazio", None
@@ -687,69 +758,68 @@ def gerar_campos_formulario(acao, nome_secao):
 
     elif nome_secao == "Vendas":
         if acao == "Pesquisar":
-            lbl1, placeholder1, validador1 = "ID Venda:", "Código de identificação da venda", validador_venda
+            lbl1, placeholder1, validador1 = "ID Cotação:", "Código da cotação", None
         elif acao == "Remover":
-            lbl1, placeholder1, validador1 = "ID Venda:", "Digite o ID da venda para excluir", validador_venda
+            lbl1, placeholder1, validador1 = "ID Cotação:", "Digite o ID para excluir", None
         elif acao == "Atualizar":
-            lbl1, placeholder1, validador1 = "ID Venda (Obrigatório):", "ID da venda que deseja alterar", validador_venda
-            lbl2, placeholder2, validador2 = "Nº Apólice:", "Novo número da apólice ou mantenha vazio", validador_apolice
-            lbl3, placeholder3, validador3 = "CPF do Cliente:", "Novo CPF do cliente ou mantenha vazio", validador_cpf
-            lbl4, placeholder4, validador4 = "Vigência Início:", "Nova data de início (DD/MM/AAAA) ou mantenha vazio", None
-            lbl5, placeholder5, validador5 = "Vigência Fim:", "Nova data de término (DD/MM/AAAA) ou mantenha vazio", None
+            lbl1, placeholder1, validador1 = "ID Cotação (Obrigatório):", "ID da cotação", None
+            lbl2, placeholder2, validador2 = "ID Pessoa:", "Novo ID numérico da pessoa", None
+            lbl3, placeholder3, validador3 = "ID Seguradora:", "Novo ID da seguradora", None
+            lbl4, placeholder4, validador4 = "ID Plano:", "Novo ID do plano", None
+            lbl5, placeholder5, validador5 = "Valor R$:", "Novo valor da cotação", None
+            lbl6, placeholder6, validador6 = "Data Cotação:", "Nova data (AAAA-MM-DD)", None
         else:
-            lbl1, placeholder1, validador1 = "ID Venda:", "Código da venda (Até 10 caracteres)", validador_venda
-            lbl2, placeholder2, validador2 = "Nº Apólice:", "Número da apólice contratada", validador_apolice
-            lbl3, placeholder3, validador3 = "CPF do Cliente:", "CPF do cliente comprador", validador_cpf
-            lbl4, placeholder4, validador4 = "Vigência Início:", "Formato DD/MM/AAAA", None
-            lbl5, placeholder5, validador5 = "Vigência Fim:", "Formato DD/MM/AAAA", None
+            lbl1, placeholder1, validador1 = "ID Pessoa:", "ID numérico do cliente", None
+            lbl2, placeholder2, validador2 = "ID Seguradora:", "ID da seguradora parceira", None
+            lbl3, placeholder3, validador3 = "ID Plano:", "ID do plano selecionado", None
+            lbl4, placeholder4, validador4 = "Valor R$:", "Ex: 1500.00", None
+            lbl5, placeholder5, validador5 = "Data Cotação:", "Formato DD/MM/AAAA", None
 
-    # Geração dos widgets com base nas definições dinâmicas acima
-  
     if lbl1:
         ctk.CTkLabel(frame_zona_inputs, text=lbl1, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
-        campo1_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder1, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
+        campo1_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder1, width=330, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador1:
             campo1_ativo.configure(validate="key", validatecommand=(validador1, "%P"))
         campo1_ativo.pack(pady=(2, 8))
 
     if lbl2:
         ctk.CTkLabel(frame_zona_inputs, text=lbl2, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
-        campo2_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder2, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
+        campo2_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder2, width=330, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador2:
             campo2_ativo.configure(validate="key", validatecommand=(validador2, "%P"))
         campo2_ativo.pack(pady=(2, 8))
 
     if lbl3:
         ctk.CTkLabel(frame_zona_inputs, text=lbl3, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
-        campo3_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder3, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
+        campo3_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder3, width=330, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador3:
             campo3_ativo.configure(validate="key", validatecommand=(validador3, "%P"))
         campo3_ativo.pack(pady=(2, 8))
 
     if lbl4:
         ctk.CTkLabel(frame_zona_inputs, text=lbl4, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
-        campo4_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder4, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
+        campo4_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder4, width=330, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador4:
             campo4_ativo.configure(validate="key", validatecommand=(validador4, "%P"))
         campo4_ativo.pack(pady=(2, 8))
 
     if lbl5:
         ctk.CTkLabel(frame_zona_inputs, text=lbl5, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
-        campo5_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder5, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
+        campo5_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder5, width=330, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador5:
             campo5_ativo.configure(validate="key", validatecommand=(validador5, "%P"))
         campo5_ativo.pack(pady=(2, 8))
 
     if lbl6:
         ctk.CTkLabel(frame_zona_inputs, text=lbl6, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
-        campo6_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder6, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
+        campo6_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder6, width=330, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador6:
             campo6_ativo.configure(validate="key", validatecommand=(validador6, "%P"))
         campo6_ativo.pack(pady=(2, 8))
 
     if lbl7:
         ctk.CTkLabel(frame_zona_inputs, text=lbl7, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
-        campo7_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder7, width=380, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
+        campo7_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder7, width=330, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)
         if validador7:
             campo7_ativo.configure(validate="key", validatecommand=(validador7, "%P"))
         campo7_ativo.pack(pady=(2, 8))
@@ -777,7 +847,7 @@ def gerar_campos_formulario(acao, nome_secao):
     label_erro_crud.pack(pady=(0, 5))
 
 
-# =====  ===== FUNÇÕES DE PONTE PARA OS BOTÕES DO CRUD 
+# ===== ===== FUNÇÕES DE PONTE PARA OS BOTÕES DO CRUD 
 
 def acao_acrescentar_clicada():
     gerar_campos_formulario("Acrescentar", secao_painel_aberto)
@@ -792,7 +862,7 @@ def acao_remover_clicada():
     gerar_campos_formulario("Remover", secao_painel_aberto)
 
 
-# ====== ====== FUNÇÃO GERAL PARA MONTAR A ESTRUTURA DO PAINEL ====
+# ====== ====== FUNÇÃO GERAL PARA MONTAR A ESTRUTURA DO PAINEL LADO A LADO ====
 
 frame_botoes_crud = None
 
@@ -802,129 +872,135 @@ def montar_estrutura_painel(nome):
     for componente in frame_conteudo.winfo_children():
         componente.destroy()
 
-    # +++++++++++ Criação do cabeçalho da seção ativa
+    # Cabeçalho da seção ativa
     ctk.CTkLabel(
         frame_conteudo, 
         text=f"Painel de {nome}", 
         font=ctk.CTkFont(family=FONTE_TITULO, size=24, weight="bold"), text_color=CINZA_ESCURO
-    ).pack(pady=(20, 15))
+    ).pack(pady=(15, 10))
 
-    # Sub-barra de ferramentas CRUD (Botões de ação superior internos)
-    frame_botoes_crud = ctk.CTkFrame(frame_conteudo, fg_color=BRANCO, corner_radius=16, border_width=1, border_color=BORDA_SUAVE)
-    frame_botoes_crud.pack(pady=10, padx=20)
+    # Frame organizador da divisão em duas colunas (Esquerda e Direita)
+    frame_divisao = ctk.CTkFrame(frame_conteudo, fg_color="transparent")
+    frame_divisao.pack(fill="both", expand=True, padx=15, pady=5)
 
-    ctk.CTkButton(frame_botoes_crud, text="Acrescentar", width=125, height=36, corner_radius=10, fg_color=VERDE_INSTITUCIONAL, hover_color=VERDE_ESCURO, text_color=BRANCO, command=acao_acrescentar_clicada).pack(side="left", padx=7, pady=10)
-    ctk.CTkButton(frame_botoes_crud, text="Pesquisar",   width=125, height=36, corner_radius=10, fg_color=CINZA_ESCURO, hover_color="#1A202C", text_color=BRANCO, command=acao_pesquisar_clicada).pack(side="left", padx=7, pady=10)
-    ctk.CTkButton(frame_botoes_crud, text="Atualizar",   width=125, height=36, corner_radius=10, fg_color=DOURADO_PREMIUM, hover_color="#B8941F", text_color="#1A202C", command=acao_atualizar_clicada).pack(side="left", padx=7, pady=10)
-    ctk.CTkButton(frame_botoes_crud, text="Remover",     width=125, height=36, corner_radius=10, fg_color=VERMELHO_ERRO, hover_color=VERMELHO_HOVER, text_color=BRANCO, command=acao_remover_clicada).pack(side="left", padx=7, pady=10)
+    # ---------------- COLUNA ESQUERDA (Barra CRUD + Formulário) ----------------
+    frame_esquerda = ctk.CTkFrame(frame_divisao, fg_color="transparent")
+    frame_esquerda.pack(side="left", fill="both", expand=True, padx=(0, 10))
 
-    # Frame central com barra de rolagem onde o formulário é renderizado dinamicamente
-    frame_zona_inputs = ctk.CTkScrollableFrame(frame_conteudo, fg_color=BRANCO, corner_radius=18, border_width=1, border_color=BORDA_SUAVE, width=520, height=350)
-    frame_zona_inputs.pack(fill="both", expand=True, padx=28, pady=8)
+    # Sub-barra de ferramentas CRUD interna na esquerda
+    frame_botoes_crud = ctk.CTkFrame(frame_esquerda, fg_color=BRANCO, corner_radius=16, border_width=1, border_color=BORDA_SUAVE)
+    frame_botoes_crud.pack(pady=5)
 
-    # LABEL FIXo: Onde as respostas e dados de sucesso são mostrados 
+    ctk.CTkButton(frame_botoes_crud, text="Acrescentar", width=100, height=34, corner_radius=8, fg_color=VERDE_INSTITUCIONAL, hover_color=VERDE_ESCURO, text_color=BRANCO, command=acao_acrescentar_clicada).pack(side="left", padx=5, pady=6)
+    ctk.CTkButton(frame_botoes_crud, text="Pesquisar",   width=100, height=34, corner_radius=8, fg_color=CINZA_ESCURO, hover_color="#1A202C", text_color=BRANCO, command=acao_pesquisar_clicada).pack(side="left", padx=5, pady=6)
+    ctk.CTkButton(frame_botoes_crud, text="Atualizar",   width=100, height=34, corner_radius=8, fg_color=DOURADO_PREMIUM, hover_color="#B8941F", text_color="#1A202C", command=acao_atualizar_clicada).pack(side="left", padx=5, pady=6)
+    ctk.CTkButton(frame_botoes_crud, text="Remover",     width=100, height=34, corner_radius=8, fg_color=VERMELHO_ERRO, hover_color=VERMELHO_HOVER, text_color=BRANCO, command=acao_remover_clicada).pack(side="left", padx=5, pady=6)
+
+    # Frame central com barra de rolagem onde o formulário é renderizado
+    frame_zona_inputs = ctk.CTkScrollableFrame(frame_esquerda, fg_color=BRANCO, corner_radius=18, border_width=1, border_color=BORDA_SUAVE, width=380, height=380)
+    frame_zona_inputs.pack(fill="both", expand=True, pady=5)
+
+    # ---------------- COLUNA DIREITA (Visualizador Fixo de Respostas) ----------------
+    frame_direita = ctk.CTkScrollableFrame(frame_divisao, fg_color="#52ABB8", width=340, height=430, corner_radius=16)
+    frame_direita.pack(side="right", fill="both", expand=False, padx=(5, 0))
+
+    ctk.CTkLabel(
+        frame_direita, 
+        text=" RETORNO / CONSULTA", 
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), 
+        text_color="black"
+    ).pack(pady=(12, 12))
+
+    # O label fixo agora fica dentro da janela da direita com rolagem automática se o texto for enorme
     label_mensagem = ctk.CTkLabel(
-        frame_conteudo, 
-        text="", 
+        frame_direita, 
+        text="Aguardando ação ou busca...", 
         font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="normal"), 
         justify="left", 
-        wraplength=700,
-        text_color=CINZA_ESCURO,
-        fg_color="transparent",
-        corner_radius=14
+        wraplength=310,
+        text_color="black"
     )
-    label_mensagem.pack(pady=15, padx=28, fill="x")
+    label_mensagem.pack(pady=5, padx=12, fill="both", expand=True)
 
 
-# ======== SEÇÃO NOVA: VISUAL DO DASHBOARD B.I. ======
+# ======== SEÇÃO: VISUAL DO DASHBOARD B.I. LADO A LADO ======
 
 def mostrar_dashboard_bi():
     global label_mensagem
     
-    # Limpa toda a tela central de trabalho
     for componente in frame_conteudo.winfo_children():
         componente.destroy()
 
-    # Título principal do Dashboard de B. I.
+    # Título principal do Dashboard de B.I.
     ctk.CTkLabel(
         frame_conteudo, 
-        text=" CONSULTAS - B.I.", 
-        font=ctk.CTkFont(size=22, weight="bold"),
-        text_color="#2ecc71"
-    ).pack(pady=(25, 10))
+        text=" PAINEL ESTRATÉGICO - B.I.", 
+        font=ctk.CTkFont(family=FONTE_TITULO, size=22, weight="bold"),
+        text_color="black"
+    ).pack(pady=(20, 4))
 
     ctk.CTkLabel(
         frame_conteudo, 
-        text="Consultas Analíticas", 
-        font=ctk.CTkFont(size=13),
-        text_color="gray"
-    ).pack(pady=(0, 20))
+        text="Consultas Analíticas de Big Data ", 
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=13),
+        text_color="black"
+    ).pack(pady=(0, 15))
 
-    # Frame organizador para alinhar os 4 botões lado a lado perfeitamente
-    frame_grid_botoes = ctk.CTkFrame(frame_conteudo, fg_color="transparent")
-    frame_grid_botoes.pack(pady=15, padx=20, fill="x")
+    # Container principal de divisão do B.I.
+    painel_bi = ctk.CTkFrame(frame_conteudo, fg_color="transparent")
+    painel_bi.pack(fill="both", expand=True, padx=15, pady=5)
 
-    # Criação dos 4 botões de indicadores de B.I.
+    # ---------------- ESQUERDA: Botões de Filtros Analíticos ----------------
+    painel_bi_esquerda = ctk.CTkFrame(painel_bi, fg_color="transparent")
+    painel_bi_esquerda.pack(side="left", fill="both", expand=True, padx=(0, 15))
+
+    ctk.CTkLabel(painel_bi_esquerda, text="SELECIONE O INDICADOR:", font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO).pack(pady=5, anchor="w")
+
     ctk.CTkButton(
-        frame_grid_botoes, 
-        text=" Faturamento", 
-        width=140, 
-        height=60, 
-        fg_color="#27ae60", 
-        hover_color="#2ecc71", 
-        font=ctk.CTkFont(size=12, weight="bold"),
+        painel_bi_esquerda, text=" Ganhos\n(Faturamento Comercial)", width=220, height=52, corner_radius=12,
+        fg_color="#27ae60", hover_color="#2ecc71", font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"),
         command=bi_faturamento_clicado
-    ).pack(side="left", padx=8, expand=True)
+    ).pack(pady=6, fill="x")
 
     ctk.CTkButton(
-        frame_grid_botoes, 
-        text="Seguradoras", 
-        width=140, 
-        height=60, 
-        fg_color="#2980b9", 
-        hover_color="#3498db", 
-        font=ctk.CTkFont(size=12, weight="bold"),
+        painel_bi_esquerda, text=" Desempenho das Seguradoras)", width=220, height=52, corner_radius=12,
+        fg_color="#2980b9", hover_color="#3498db", font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"),
         command=bi_seguradoras_clicado
-    ).pack(side="left", padx=8, expand=True)
+    ).pack(pady=6, fill="x")
 
     ctk.CTkButton(
-        frame_grid_botoes, 
-        text="Renovações", 
-        width=140, 
-        height=60, 
-        fg_color="#d35400", 
-        hover_color="#e67e22", 
-        font=ctk.CTkFont(size=12, weight="bold"),
+        painel_bi_esquerda, text=" Metas e Alertas de Renovações", width=220, height=52, corner_radius=12,
+        fg_color="#d35400", hover_color="#e67e22", font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"),
         command=bi_renovacoes_clicado
-    ).pack(side="left", padx=8, expand=True)
+    ).pack(pady=6, fill="x")
 
     ctk.CTkButton(
-        frame_grid_botoes, 
-        text="Clientes", 
-        width=140, 
-        height=60, 
-        fg_color="#8e44ad", 
-        hover_color="#9b59b6", 
-        font=ctk.CTkFont(size=12, weight="bold"),
+        painel_bi_esquerda, text=" Potencial  de Clientes", width=220, height=52, corner_radius=12,
+        fg_color="#8e44ad", hover_color="#9b59b6", font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"),
         command=bi_clientes_clicado
-    ).pack(side="left", padx=8, expand=True)
+    ).pack(pady=6, fill="x")
 
-    # Divisor visual  para separar os botões da área de resposta
-    ctk.CTkFrame(frame_conteudo, height=2, fg_color="#2c3e50").pack(fill="x", padx=40, pady=25)
+    # ---------------- DIREITA: Monitor de exibição dos relatórios de B.I. ----------------
+    painel_bi = ctk.CTkScrollableFrame(painel_bi, fg_color="#52ABB8", width=380, height=390, corner_radius=16)
+    painel_bi.pack(side="right", fill="both", expand=True)
 
-    # Espaço reservado fixo onde os dados das tabelas de agregação vão aparecer 
+    ctk.CTkLabel(
+        painel_bi, text=" RELATÓRIO EXTRAÍDO ", 
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color="black"
+    ).pack(pady=(12, 15))
+
     label_mensagem = ctk.CTkLabel(
-        frame_conteudo, 
-        text="Selecione um indicador acima para exibir consulta", 
-        font=ctk.CTkFont(size=14, weight="normal"), 
-        justify="center", 
-        wraplength=650,
-        text_color="#bdc3c7"
+        painel_bi, 
+        text="Selecione um indicador estratégico à esquerda para extrair as métricas em tempo real do PostgreSQL.", 
+        font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="normal"), 
+        justify="left", 
+        wraplength=340,
+        text_color="black"
     )
-    label_mensagem.pack(pady=10, padx=20, fill="both", expand=True)
+    label_mensagem.pack(pady=10, padx=12, fill="both", expand=True)
 
 
-# ============= SEÇÕES DE CHAMADAS DO MENU LATERAL =============
+# =========+==== SEÇÕES DE CHAMADAS DO MENU LATERAL ++
 
 secao_painel_aberto = ""
 
@@ -965,7 +1041,7 @@ def mostrar_secao_vendas():
     gerar_campos_formulario("Pesquisar", "Vendas")
 
 
-# ============= COMPONENTES DO MENU LATERAL (BOTÕES) =============
+# =====+======= COMPONENTES DOS BOTÕES MENU LATERAL  
 
 ctk.CTkButton(frame_lateral, text=" CLIENTES",    anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_tela_clientes).pack(pady=3, padx=14)
 ctk.CTkButton(frame_lateral, text=" SEGURADORAS", anchor="w", width=175, height=40, corner_radius=10, fg_color="transparent", hover_color=VERDE_INSTITUCIONAL, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=mostrar_secao_seguradoras).pack(pady=3, padx=14)
@@ -979,18 +1055,19 @@ ctk.CTkButton(
     frame_lateral, 
     text="  DASHBOARD B.I.", 
     anchor="w", 
-    width=160, 
+    width=175, 
     height=42, 
+    corner_radius=10,
     fg_color="#024d0d", 
     hover_color="#17b978", 
-    font=ctk.CTkFont(size=13, weight="bold"), 
+    font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), 
     command=mostrar_dashboard_bi
-).pack(pady=12, padx=10)
+).pack(pady=12, padx=14)
 
 # Espaçador interno para empurrar o botão Sair para baixo
 ctk.CTkLabel(frame_lateral, text="").pack(fill="both", expand=True)
 
-ctk.CTkButton(frame_lateral, text=" LOGOUT / SAIR", anchor="w", width=160, height=38, fg_color=VERMELHO_ERRO, hover_color=VERMELHO_HOVER, text_color=BRANCO, font=ctk.CTkFont(size=13, weight="bold"), command=fechar_login).pack(pady=15, padx=10)
+ctk.CTkButton(frame_lateral, text=" LOGOUT / SAIR", anchor="w", width=175, height=40, corner_radius=10, fg_color=VERMELHO_ERRO, hover_color=VERMELHO_HOVER, text_color=BRANCO, font=ctk.CTkFont(family=FONTE_PADRAO, size=13, weight="bold"), command=fechar_login).pack(pady=15, padx=14)
 
 
 # Inicializa a execução da janela do Tkinter
