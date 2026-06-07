@@ -676,7 +676,12 @@ def confirma_crud():
             v6_banco = data_br_para_banco(v6)                   # converte data nascimento para formato do banco
             sucesso = crud.create_pessoa(v1, v2, v3, v4.upper(), v5, v6_banco, v7)
             if sucesso:
-                mensagem_alerta = "Cliente adicionado com sucesso!"
+                mensagem_alerta = (
+                    f"Cliente adicionado com sucesso!\n\n"
+                    f"ID gerado: {sucesso}\n"
+                    f"Nome: {v2}\n"
+                    f"CPF/CNPJ: {v1}"
+                )
             else:
                 label_erro_crud.configure(text="Erro ao salvar no banco. Verifique os dados.", text_color=VERMELHO_ERRO)
                 return
@@ -731,7 +736,12 @@ def confirma_crud():
         if chamar_acao == "Acrescentar":
             sucesso = crud.create_seguradora(v1, v2, v3)        # nome_fantasia, cnpj, telefone_suporte
             if sucesso:
-                mensagem_alerta = "Seguradora adicionada com sucesso!"
+                mensagem_alerta = (
+                    f"Seguradora adicionada com sucesso!\n\n"
+                    f"ID gerado: {sucesso}\n"
+                    f"Nome: {v1}\n"
+                    f"CNPJ: {v2}"
+                )
             else:
                 label_erro_crud.configure(text="Erro ao salvar seguradora no banco.", text_color=VERMELHO_ERRO)
                 return
@@ -779,7 +789,12 @@ def confirma_crud():
         if chamar_acao == "Acrescentar":
             sucesso = crud.create_plano(v1, v2, v3)             # id_seguradora, tipo_cobertura, nome_plano
             if sucesso:
-                mensagem_alerta = "Plano cadastrado com sucesso!"
+                mensagem_alerta = (
+                    f"Plano cadastrado com sucesso!\n\n"
+                    f"ID gerado: {sucesso}\n"
+                    f"Nome do Plano: {v3}\n"
+                    f"ID Seguradora: {v1}"
+                )
             else:
                 label_erro_crud.configure(text="Erro ao salvar plano no banco.", text_color=VERMELHO_ERRO)
                 return
@@ -827,7 +842,12 @@ def confirma_crud():
         if chamar_acao == "Acrescentar":
             sucesso = crud.create_bem(v1, v2, v3, v4)
             if sucesso:
-                mensagem_alerta = "Bem adicionado com sucesso!"
+                mensagem_alerta = (
+                    f"Bem adicionado com sucesso!\n\n"
+                    f"ID gerado: {sucesso}\n"
+                    f"Tipo do Bem: {v2}\n"
+                    f"Descrição: {v3}"
+                )
             else:
                 label_erro_crud.configure(text="Erro ao salvar bem no banco.", text_color=VERMELHO_ERRO)
                 return
@@ -873,9 +893,14 @@ def confirma_crud():
     elif painel_usado == "Apolices":
 
         if chamar_acao == "Acrescentar":
-            sucesso = crud.create_apolice(v1, v2, v3, v4, v5)
+            sucesso = crud.create_apolice(v1, v2, v3)
             if sucesso:
-                mensagem_alerta = "Apólice registrada com sucesso!"
+                mensagem_alerta = (
+                    f"Apólice registrada com sucesso!\n\n"
+                    f"ID gerado: {sucesso}\n"
+                    f"ID Cotação: {v1}\n"
+                    f"Vigência: {v2} até {v3}"
+                )
             else:
                 label_erro_crud.configure(text="Erro ao criar apólice. Verifique os dados.", text_color=VERMELHO_ERRO)
                 return
@@ -921,22 +946,35 @@ def confirma_crud():
         if chamar_acao == "Acrescentar":
             sucesso = crud.create_cotacao(v1, v2, v3, v4, data_br_para_banco(v5))
             if sucesso:
-                mensagem_alerta = "Cotação registrada com sucesso!"
+                mensagem_alerta = (
+                    f"Cotação registrada com sucesso!\n\n"
+                    f"ID gerado: {sucesso}\n"
+                    f"ID Pessoa: {v1}\n"
+                    f"Valor: R$ {v4}"
+                )
             else:
                 label_erro_crud.configure(text="Erro ao registrar cotação.", text_color=VERMELHO_ERRO)
                 return
 
         elif chamar_acao == "Pesquisar":
-            venda = crud.read_cotacao(v1)
+            if v1:
+                venda = crud.read_cotacao(v1)
+            else:
+                venda = crud.read_cotacao_por_pessoa(v2)
+                
             if venda:
                 mensagem_alerta = (
                     f"Registro de Cotação Encontrado!\n\n"
                     f"ID Cotação: {venda['id_cotacao']}\n"
+                    f"ID Cliente: {venda['id_pessoa']}\n"
                     f"Cliente: {venda['nome_pessoa']}\n"
+                    f"ID Seguradora: {venda['id_seguradora']}\n"
                     f"Seguradora: {venda['nome_fantasia']}\n"
+                    f"ID Plano: {venda['id_plano']}\n"
                     f"Plano: {venda['nome_plano']}\n"
                     f"Valor Cotação: R$ {venda['valor_cotacao']}\n"
-                    f"Data: {data_banco_para_br(venda['data_cotacao'])}"
+                    f"Data: {data_banco_para_br(venda['data_cotacao'])}\n"
+                    f"Status: {venda['status_cotacao']}"
                 )
             else:
                 label_erro_crud.configure(text="ID de cotação inexistente!", text_color=VERMELHO_ERRO)
@@ -1087,6 +1125,7 @@ def gerar_campos_formulario(acao, nome_secao):
     elif nome_secao == "Cotações":
         if acao == "Pesquisar":
             lbl1, placeholder1, validador1 = "ID Cotação:", "Código da cotação", None
+            lbl2, placeholder2, validador2 = "CPF/CNPJ:", "CPF ou CNPJ do cliente", None
         elif acao == "Remover":
             lbl1, placeholder1, validador1 = "ID Cotação:", "Digite o ID para excluir", None
         elif acao == "Atualizar":

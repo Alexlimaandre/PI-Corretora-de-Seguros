@@ -10,16 +10,21 @@ cursor = conn.cursor()             # cria um cursor para executar comandos SQL
 
 def create_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
     # Insere um novo cliente na tabela pessoa
+    # Retorna o ID gerado se deu certo, ou False se deu erro
     try:
         cursor.execute(
             """INSERT INTO pessoa
                (cpf_cnpj, nome_completo, email, sexo, telefone, data_nascimento, status)
-               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+               VALUES (%s, %s, %s, %s, %s, %s, %s)
+               RETURNING id_pessoa""",
             (cpf, nome, email, sexo, telefone, data_nasc, status)
         )
+
+        id_gerado = cursor.fetchone()[0]
+
         conn.commit()       # salva no banco — sem isso o dado NÃO é gravado
         print("Pessoa criada com sucesso!")
-        return True         # avisa a interface que deu certo
+        return id_gerado    # retorna o ID criado para a interface exibir
 
     except Exception as e:
         conn.rollback()     # cancela qualquer alteração parcial se der erro
@@ -28,82 +33,109 @@ def create_pessoa(cpf, nome, email, sexo, telefone, data_nasc, status):
 
 def create_apolice(id_cotacao, inicio, fim):
     # Insere uma nova apólice vinculada a uma cotação
+    # Retorna o ID gerado se deu certo, ou False se deu erro
     try:
         cursor.execute(
             """INSERT INTO apolice (id_cotacao, inicio, fim)
-               VALUES (%s, %s, %s)""",
+               VALUES (%s, %s, %s)
+               RETURNING id_apolice""",
             (id_cotacao, inicio, fim)
         )
+
+        id_gerado = cursor.fetchone()[0]
+
         conn.commit()
         print("Apólice criada com sucesso!")
-        return True
+        return id_gerado
 
     except Exception as e:
         conn.rollback()
         print("Erro ao criar apólice:", e)
         return False
 
-def create_cotacao(id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao):
+def create_cotacao(id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao, status):
     # Insere uma nova cotação no banco
+    # Retorna o ID gerado se deu certo, ou False se deu erro
     try:
         cursor.execute(
             """INSERT INTO cotacoes
-               (id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao)
-               VALUES (%s, %s, %s, %s, %s)""",
-            (id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao)
+               (id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao, status)
+               VALUES (%s, %s, %s, %s, %s, %s)
+               RETURNING id_cotacao""",
+            (id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao, status)
         )
+
+        id_gerado = cursor.fetchone()[0]
+
         conn.commit()
         print("Cotação criada com sucesso!")
-        return True
+        return id_gerado
 
     except Exception as e:
         conn.rollback()
         print("Erro ao criar cotação:", e)
         return False
-    
+
 def create_seguradora(nome, cnpj, telefone):
     # Insere uma nova seguradora no banco
+    # Retorna o ID gerado se deu certo, ou False se deu erro
     try:
         cursor.execute(
             """INSERT INTO seguradora (nome_fantasia, cnpj, telefone_suporte)
-               VALUES (%s, %s, %s)""",
+               VALUES (%s, %s, %s)
+               RETURNING id_seguradora""",
             (nome, cnpj, telefone)
         )
+
+        id_gerado = cursor.fetchone()[0]
+
         conn.commit()
         print("Seguradora criada com sucesso!")
-        return True
+        return id_gerado
 
     except Exception as e:
         conn.rollback()
         print("Erro ao criar seguradora:", e)
         return False
-    
+
 def create_plano(id_seguradora, tipo_cobertura, nome_plano):
+    # Insere um novo plano no banco
+    # Retorna o ID gerado se deu certo, ou False se deu erro
     try:
         cursor.execute(
             """INSERT INTO plano (id_seguradora, tipo_cobertura ,nome_plano)
-               VALUES (%s, %s, %s)""",
+               VALUES (%s, %s, %s)
+               RETURNING id_plano""",
             (id_seguradora, tipo_cobertura, nome_plano)
         )
+
+        id_gerado = cursor.fetchone()[0]
+
         conn.commit()
         print("Plano criado com sucesso!")
-        return True
+        return id_gerado
 
     except Exception as e:
         conn.rollback()
         print("Erro ao criar plano:", e)
         return False
-    
+
 def create_bem(id_pessoa, tipo_bem, descricao_bem, valor_estimado):
+    # Insere um novo bem no banco
+    # Retorna o ID gerado se deu certo, ou False se deu erro
     try:
         cursor.execute(
             """INSERT INTO bens (id_pessoa, tipo_bem, descricao_bem, valor_estimado)
-               VALUES (%s, %s, %s, %s)""",
+               VALUES (%s, %s, %s, %s)
+               RETURNING id_bem""",
             (id_pessoa, tipo_bem, descricao_bem, valor_estimado)
         )
+
+        id_gerado = cursor.fetchone()[0]
+
         conn.commit()
         print("Bem criado com sucesso!")
-        return True
+        return id_gerado
 
     except Exception as e:
         conn.rollback()
@@ -111,8 +143,7 @@ def create_bem(id_pessoa, tipo_bem, descricao_bem, valor_estimado):
         return False
 
 
-#                   READ                    #
-
+#                  READ                     #
 def read_todas_pessoas():
     # Retorna uma lista de dicionários com todos os clientes do banco
     try:
@@ -304,19 +335,23 @@ def read_cotacao(id_cotacao):
             """
             SELECT
                 c.id_cotacao AS id_cotacao,
-                p.nome_completo AS nome_pessoa,
-                s.nome_fantasia AS nome_fantasia,
-                pl.nome_plano AS nome_plano,
+                p.id_pessoa AS id_pessoa,
+                p.nome_completo AS cliente,
+                s.id_seguradora as id_cotacao,
+                s.nome_fantasia AS seguradora,
+                pl.id_plano AS id_plano,
+                pl.nome_plano AS plano,
                 c.valor_cotacao AS valor_cotacao,
-                c.data_cotacao AS data_cotacao
-            FROM Seguradora s
-            JOIN Plano pl
-                USING(id_seguradora)
-            JOIN Cotacoes c
-                USING(id_plano)
-            JOIN Pessoa p
+                c.data_cotacao AS data_cotacao,
+                c.status_cotacao AS status_cotacao
+            FROM cotacoes c
+            JOIN pessoa p
                 USING(id_pessoa)
-            WHERE c.id_cotacao = %s""",
+            JOIN seguradora s
+                USING(id_seguradora)
+            JOIN plano pl
+                USING(id_plano)
+            WHERE id_cotacao = %s""",
             (id_cotacao,)
         )
         resultado = cursor.fetchone()
@@ -326,11 +361,15 @@ def read_cotacao(id_cotacao):
 
         venda = {
             "id_cotacao":    resultado[0],
-            "nome_pessoa":     str(resultado[1]),
-            "nome_fantasia": str(resultado[2]),
-            "nome_plano":      str(resultado[3]),
-            "valor_cotacao": str(resultado[4]),
-            "data_cotacao":  str(resultado[5])
+            "id_pessoa": resultado[1],
+            "nome_pessoa":     str(resultado[2]),
+            "id_seguradora": resultado[3],
+            "nome_fantasia": str(resultado[4]),
+            "id_plano": resultado[5],
+            "nome_plano":      str(resultado[6]),
+            "valor_cotacao": str(resultado[7]),
+            "data_cotacao":  str(resultado[8]),
+            "status_cotacao": str(resultado[9])
         }
         return venda
 
@@ -339,27 +378,31 @@ def read_cotacao(id_cotacao):
         print("Erro ao buscar cotação:", e)
         return None
 
-def read_cotacao_por_pessoa(id_pessoa):
-    # Busca cotação pelo ID da pessoa vinculada
+def read_cotacao_por_pessoa(cpf_cnpj):
+    # Busca cotação pelo CPF/CNPJ da pessoa vinculada
     try:
         cursor.execute(
             """
             SELECT
-                c.id_cotacao,
-                p.nome_completo AS Cliente,
-                s.nome_fantasia AS Seguradora,
-                pl.nome_plano AS Plano,
-                c.valor_cotacao AS "Valor Cotação",
-                c.data_cotacao AS "Data da Cotação"
-            FROM Seguradora s
-            JOIN Plano pl
-                USING(id_seguradora)
-            JOIN Cotacoes c
-                USING(id_plano)
-            JOIN Pessoa p
+                c.id_cotacao AS id_cotacao,
+                p.id_pessoa AS id_pessoa,
+                p.nome_completo AS cliente,
+                s.id_seguradora as id_cotacao,
+                s.nome_fantasia AS seguradora,
+                pl.id_plano AS id_plano,
+                pl.nome_plano AS plano,
+                c.valor_cotacao AS valor_cotacao,
+                c.data_cotacao AS data_cotacao,
+                c.status_cotacao AS status_cotacao
+            FROM cotacoes c
+            JOIN pessoa p
                 USING(id_pessoa)
-            WHERE p.id_pessoa = %s""",
-            (id_pessoa,)
+            JOIN seguradora s
+                USING(id_seguradora)
+            JOIN plano pl
+                USING(id_plano)
+            WHERE p.cpf_cnpj = %s""",
+            (cpf_cnpj,)
         )
         resultado = cursor.fetchone()
 
@@ -367,12 +410,16 @@ def read_cotacao_por_pessoa(id_pessoa):
             return None
 
         venda = {
-            "c.id_cotacao":    resultado[0],
-            "p.nome_pessoa":     str(resultado[1]),
-            "s.nome_fantasia": str(resultado[2]),
-            "pl.nome_plano":      str(resultado[3]),
-            "c.valor_cotacao": str(resultado[4]),
-            "c.data_cotacao":  str(resultado[5])
+            "id_cotacao":    resultado[0],
+            "id_pessoa": resultado[1],
+            "nome_pessoa":     str(resultado[2]),
+            "id_seguradora": resultado[3],
+            "nome_fantasia": str(resultado[4]),
+            "id_plano": resultado[5],
+            "nome_plano":      str(resultado[6]),
+            "valor_cotacao": str(resultado[7]),
+            "data_cotacao":  str(resultado[8]),
+            "status_cotacao": str(resultado[9])
         }
         return venda
 
@@ -646,13 +693,24 @@ def update_apolice(id_apolice, inicio, fim):
         print("Erro ao atualizar apólice:", e)
         return False
 
-def update_cotacao(id_cotacao, id_pessoa, id_seguradora, id_plano, valor, data):
+def update_cotacao(id_cotacao, id_pessoa, id_seguradora, id_plano, valor, data, status):
     # Atualiza os dados de uma cotação pelo ID
     try:
+        
+        cotacao_atual = read_cotacao(id_cotacao)
+        if not cotacao_atual:
+            return False
+        id_pessoa = id_pessoa if id_pessoa != "" else cotacao_atual[int("id_pessoa")]
+        id_seguradora = id_seguradora if id_seguradora != "" else cotacao_atual["id_seguradora"]
+        id_plano = id_plano if id_plano != "" else cotacao_atual["id_plano"]
+        valor = valor if valor != "" else cotacao_atual["valor_cotacao"]
+        data = data if data != "" else cotacao_atual["data_cotacao"]
+        status = status if status != "" else cotacao_atual["status"]
+        
         cursor.execute(
             """UPDATE cotacoes
                SET id_pessoa=%s, id_seguradora=%s, id_plano=%s,
-                   valor_cotacao=%s, data_cotacao=%s
+                   valor_cotacao=%s, data_cotacao=%s, status=%s
                WHERE id_cotacao = %s""",
             (id_pessoa, id_seguradora, id_plano, valor, data, id_cotacao)
         )
@@ -1065,183 +1123,7 @@ def listagem_geral_apolices():
         conn.rollback()
         print("Erro ao buscar apólices:", e)
         return None
- 
-   
-## CONSULTAS PARA OS INDICADORES DO BI ##
-# def qtd_cliente_por_status(status=None):
-#     try:
-#         if status is None or status == "":
-#             cursor.execute("""  
-#                     SELECT 
-#                         COUNT(*) AS qtd_status
-#                     FROM pessoa;
-#                     """)
-#         else:
-#             cursor.execute("""  
-#                     SELECT 
-#                         status||'(s): '||COUNT(*) AS qtd_status
-#                     FROM pessoa
-#                     GROUP BY status
-#                     HAVING UPPER(status) = '%s';
-#                     """,
-#                     (status,)
-#         )
-#         resultado = cursor.fetchone()
-#         if resultado is None:
-#             return None
-
-#         indicador = {
-#             "qtd_status": resultado[1]
-#         }
-#         return indicador
-
-#     except Exception as e:
-#         conn.rollback()
-#         print("Erro ao buscar indicador de clientes por status:", e)
-#         return None
     
-# def novas_apolices(dias=None):
-#     try:
-#         if dias is None:
-#             cursor.execute("SELECT COUNT(*) AS qtd_novas_apolices FROM Apolice;"),
-#         else:            
-#             cursor.execute("""
-#                     SELECT 
-#                         COUNT(*) AS qtd_novas_apolices
-#                     FROM Apolice
-#                     WHERE inicio >= CURRENT_DATE - INTERVAL '%s' DAY;
-#                     """, 
-#                     (dias,))
-            
-#         if resultado is None:
-#             return None
-#         resultado = cursor.fetchone()
-
-#         indicador = {
-#             "qtd_novas_apolices": resultado[0]
-#         }
-#         return indicador
-
-#     except Exception as e:
-#         conn.rollback()
-#         print("Erro ao buscar indicador de novas apólices:", e)
-#         return None
-    
-# def novas_cotacoes(dias=None):
-#     try:
-#         if dias is None:
-#             cursor.execute("SELECT COUNT(*) AS qtd_orcamentos FROM Cotacoes;"),
-#         else:
-#             cursor.execute("""
-#                         SELECT 
-#                             COUNT(*) AS qtd_orcamentos
-#                         FROM cotacoes
-#                         WHERE data_cotacao >= CURRENT_DATE - INTERVAL '%s' DAY;
-#                         """, (dias,))
-#         resultado = cursor.fetchone()
-#         if resultado is None:
-#             return None
-
-#         indicador = {
-#             "qtd_orcamentos": resultado[0]
-#         }
-#         return indicador
-
-#     except Exception as e:
-#         conn.rollback()
-#         print("Erro ao buscar indicador de orçamentos feitos:", e)
-#         return None
-    
-# def apolices_vencidas(dias=None):
-#     try:
-#         if dias is None:
-#             cursor.execute("""
-#                         SELECT 
-#                             COUNT(*) AS qtd_apolices_vencidas
-#                         FROM Apolice
-#                         WHERE fim < CURRENT_DATE;
-#                         """)
-#         else:
-#             cursor.execute("""
-#                         SELECT 
-#                             COUNT(*) AS qtd_apolices_vencidas
-#                         FROM Apolice
-#                         WHERE fim < CURRENT_DATE - INTERVAL '%s' DAY;
-#                         """, (dias,))
-#         resultado = cursor.fetchone()
-#         if resultado is None:
-#             return None
-
-#         indicador = {
-#             "qtd_apolices_vencidas": resultado[0]
-#         }
-#         return indicador
-
-#     except Exception as e:
-#         conn.rollback()
-#         print("Erro ao buscar indicador de apólices vencidas:", e)
-#         return None
-    
-# def apolices_vencendo(dias=None):
-#     try:
-#         if dias is None or dias == "":
-#             cursor.execute("""
-#                         SELECT 
-#                             COUNT(*) AS qtd_apolices_vencendo
-#                         FROM Apolice
-#                         WHERE fim >= CURRENT_DATE AND fim <= CURRENT_DATE + INTERVAL '30' DAY;
-#                         """, (dias,))
-#         else:
-#             cursor.execute("""
-#                         SELECT 
-#                             COUNT(*) AS qtd_apolices_vencendo
-#                         FROM Apolice
-#                         WHERE fim >= CURRENT_DATE AND fim <= CURRENT_DATE + INTERVAL '%s' DAY;
-#                         """, (dias,))
-#         resultado = cursor.fetchone()
-#         if resultado is None:
-#             return None
-
-#         indicador = {
-#             "qtd_apolices_vencendo": resultado[0]
-#         }
-#         return indicador
-
-#     except Exception as e:
-#         conn.rollback()
-#         print("Erro ao buscar indicador de apólices vencendo:", e)
-#         return None
-
-# def contrato_por_seguradora():
-    try:
-        cursor.execute("""
-                SELECT
-                    s.nome_fantasia AS seguradora,
-                    COUNT(a.id_apolice) AS qtd_contratos
-                FROM apolice a
-                JOIN cotacoes c 
-                    USING(id_cotacao)
-                JOIN seguradora s 
-                    USING(id_seguradora)
-                GROUP BY s.nome_fantasia
-                ORDER BY qtd_contratos DESC;
-                    """)
-        resultados = cursor.fetchall()
-        contratantes = []
-        for resultado in resultados:
-            contratante = {
-                "seguradora": resultado[0],
-                "qtd_contratos": resultado[1]
-            }
-            contratantes.append(contratante)
-        return contratantes
-
-    except Exception as e:
-        conn.rollback()
-        print("Erro ao buscar indicador de contratantes por seguradora:", e)
-        return None     
- 
-#            PONTES E CONEXÕES DO DASHBOARD DE B.I. 
 
 def bi_indicador_ganhos_conversao():
     """
