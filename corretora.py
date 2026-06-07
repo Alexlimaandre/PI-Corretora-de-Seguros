@@ -160,6 +160,9 @@ campo4_ativo  = None
 campo5_ativo  = None
 campo6_ativo  = None
 campo7_ativo  = None
+campo8_ativo  = None
+campo9_ativo  = None
+campo10_ativo = None
 label_erro_crud  = None  # referência ao label de erro do CRUD atual
 label_mensagem   = None  # referência ao label de mensagem de sucesso/info inline de forma fixa
 painel_usado     = ""    # indica qual seção está aberta
@@ -637,6 +640,9 @@ def confirma_crud():
     v5 = campo5_ativo.get().strip() if campo5_ativo else ""
     v6 = campo6_ativo.get().strip() if campo6_ativo else ""
     v7 = campo7_ativo.get().strip() if campo7_ativo else ""
+    v8 = campo8_ativo.get().strip() if campo8_ativo else ""
+    v9 = campo9_ativo.get().strip() if campo9_ativo else ""
+    v10 = campo10_ativo.get().strip() if campo10_ativo else ""
 
     label_erro_crud.configure(text="")                          # limpa erro anterior
     mostrar_mensagem_inline("")                                 # limpa mensagem de sucesso anterior
@@ -981,7 +987,7 @@ def confirma_crud():
                 return
 
         elif chamar_acao == "Atualizar":
-            sucesso = crud.update_cotacao(v1, v2, v3, v4, v5, v6)
+            sucesso = crud.update_cotacao(v1, v2, v3, v4, v5, v6, v7)
             if sucesso:
                 mensagem_alerta = "Informações da cotação atualizadas!"
             else:
@@ -1135,13 +1141,14 @@ def gerar_campos_formulario(acao, nome_secao):
             lbl4, placeholder4, validador4 = "ID Plano:", "Novo ID do plano", None
             lbl5, placeholder5, validador5 = "Valor R$:", "Novo valor da cotação", None
             lbl6, placeholder6, validador6 = "Data Cotação:", "Nova data (AAAA-MM-DD)", None
+            lbl7, placeholder7, validador7 = "Status Cotação:", "Novo status (Ex: Aprovada, Rejeitada) ou mantenha vazio", None
         else:
             lbl1, placeholder1, validador1 = "ID Pessoa:", "ID numérico do cliente", None
             lbl2, placeholder2, validador2 = "ID Seguradora:", "ID da seguradora parceira", None
             lbl3, placeholder3, validador3 = "ID Plano:", "ID do plano selecionado", None
             lbl4, placeholder4, validador4 = "Valor R$:", "Ex: 1500.00", None
             lbl5, placeholder5, validador5 = "Data Cotação:", "Formato DD/MM/AAAA", None
-
+            lbl6, placeholder6, validador6 = "Status Cotação:", "Novo status (Ex: Aprovada, Rejeitada) ou mantenha vazio", None
     if lbl1:
         ctk.CTkLabel(frame_zona_inputs, text=lbl1, font=ctk.CTkFont(family=FONTE_PADRAO, size=12, weight="bold"), text_color=CINZA_ESCURO, anchor="center").pack(pady=(8, 0))
         campo1_ativo = ctk.CTkEntry(frame_zona_inputs, placeholder_text=placeholder1, width=330, height=40, corner_radius=10, border_color=BORDA_SUAVE, fg_color=BRANCO, text_color=CINZA_ESCURO)

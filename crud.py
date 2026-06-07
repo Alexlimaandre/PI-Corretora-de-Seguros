@@ -700,19 +700,19 @@ def update_cotacao(id_cotacao, id_pessoa, id_seguradora, id_plano, valor, data, 
         cotacao_atual = read_cotacao(id_cotacao)
         if not cotacao_atual:
             return False
-        id_pessoa = id_pessoa if id_pessoa != "" else cotacao_atual[int("id_pessoa")]
+        id_pessoa = id_pessoa if id_pessoa != "" else cotacao_atual["id_pessoa"]
         id_seguradora = id_seguradora if id_seguradora != "" else cotacao_atual["id_seguradora"]
         id_plano = id_plano if id_plano != "" else cotacao_atual["id_plano"]
         valor = valor if valor != "" else cotacao_atual["valor_cotacao"]
         data = data if data != "" else cotacao_atual["data_cotacao"]
-        status = status if status != "" else cotacao_atual["status"]
+        status = status if status != "" else cotacao_atual["status_cotacao"]
         
         cursor.execute(
             """UPDATE cotacoes
                SET id_pessoa=%s, id_seguradora=%s, id_plano=%s,
-                   valor_cotacao=%s, data_cotacao=%s, status=%s
+                   valor_cotacao=%s, data_cotacao=%s, status_cotacao=%s
                WHERE id_cotacao = %s""",
-            (id_pessoa, id_seguradora, id_plano, valor, data, id_cotacao)
+            (id_pessoa, id_seguradora, id_plano, valor, data, status, id_cotacao)
         )
         conn.commit()
 
