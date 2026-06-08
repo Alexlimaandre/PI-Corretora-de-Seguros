@@ -1476,3 +1476,32 @@ def contrato_por_seguradora():
         conn.rollback()
         print("Erro ao buscar indicador de contratos por seguradora:", e)
         return []
+
+
+def validar_login(nome_usuario, senha):
+    try:
+        cursor.execute("""
+            SELECT
+                id_usuario,
+                nome_usuario
+            FROM usuario
+            WHERE nome_usuario = %s
+            AND senha = %s
+        """, (nome_usuario, senha))
+
+        resultado = cursor.fetchone()
+
+        if resultado is None:
+            return None
+
+        usuario = {
+            "id_usuario": resultado[0],
+            "nome_usuario": resultado[1]
+        }
+
+        return usuario
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao validar login:", e)
+        return None

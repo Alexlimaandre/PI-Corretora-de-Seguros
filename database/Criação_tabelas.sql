@@ -73,6 +73,13 @@ CREATE TABLE Apolice (
         ON UPDATE CASCADE
 );
 
+DROP TABLE IF EXISTS Usuario CASCADE;
+CREATE TABLE Usuario (
+    id_usuario SERIAL PRIMARY KEY,
+    nome_usuario VARCHAR(50) NOT NULL UNIQUE,
+    senha VARCHAR(100) NOT NULL
+);
+
 ALTER TABLE Cotacoes ADD COLUMN status_cotacao VARCHAR(20) DEFAULT 'Pendente';
 
 -----Trigger------

@@ -3,7 +3,6 @@
 # Conectado ao banco de dados PostgreSQL via módulo crud.py
 
 import customtkinter as ctk                # biblioteca para interface gráfica moderna
-from config import USUARIO, SENHA          # credenciais de login do arquivo config.py
 import crud                                # funções de acesso ao banco de dados
 
 ctk.set_appearance_mode("light")           # identidade visual clara e corporativa
@@ -67,18 +66,23 @@ validador_sexo     = janela.register(limita_sexo)
 # ============= FUNÇÃO DE LOGIN =============
 
 def login():                                                    # define a função de login
-    usuario = entry_user.get()                                  # pega o texto digitado no campo de usuário
-    senha   = entry_pass.get()                                  # pega o texto digitado no campo de senha
+    usuario = crud.validar_login(
+        entry_user.get().strip(),
+        entry_pass.get().strip()
+    )
 
-    if usuario == USUARIO and senha == SENHA:                   # verifica se usuário e senha estão corretos
-        label_erro.configure(text="")                           # limpa mensagem de erro anterior
-        frame_login.pack_forget()                               # esconde o painel de login
-        frame_menu.pack(fill="both", expand=True)               # mostra o painel do menu principal
-        frame_lateral.pack(side="left", fill="y")               # exibe o menu lateral fixo
-        mostrar_tela_clientes()                                 # exibe a seção de clientes por padrão
+    if usuario:                                                # verifica se o usuário existe no banco
+        print("Login realizado com sucesso!")
+        print(usuario["nome_usuario"])
+
+        label_erro.configure(text="")                          # limpa mensagem de erro anterior
+        frame_login.pack_forget()                              # esconde o painel de login
+        frame_menu.pack(fill="both", expand=True)              # mostra o painel do menu principal
+        frame_lateral.pack(side="left", fill="y")              # exibe o menu lateral fixo
+        mostrar_tela_clientes()                                # exibe a seção de clientes por padrão
     else:
-        label_erro.configure(text="Usuário ou senha incorretos!", text_color=VERMELHO_ERRO)
-
+        print("Usuário ou senha inválidos.")
+        label_erro.configure(text="Usuário ou senha inválidos!", text_color=VERMELHO_ERRO)
 def login_entrar(event):                                        # dispara o login com a tecla Enter
     login()
 

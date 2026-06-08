@@ -4068,3 +4068,5 @@ INSERT INTO Apolice (id_cotacao, inicio, fim) VALUES (694, '2026-01-22', '2027-0
 INSERT INTO Bens (id_pessoa, tipo_bem, descricao_bem, valor_estimado) VALUES (1000, 'Vida', 'Bem protegido - Fugit', 47148.38);
 INSERT INTO Cotacoes (id_pessoa, id_seguradora, id_plano, valor_cotacao, data_cotacao) VALUES (1000, 2, 2, 6032.11, '2025-10-20');
 INSERT INTO Apolice (id_cotacao, inicio, fim) VALUES (695, '2025-10-25', '2026-10-25');
+
+INSERT INTO Usuario (nome_usuario,senha)VALUES ('admin','12345');
