@@ -1,3 +1,4 @@
+
 erDiagram
     PESSOA ||--o{ BENS : "possui"
     PESSOA ||--o{ COTACOES : "solicita"
