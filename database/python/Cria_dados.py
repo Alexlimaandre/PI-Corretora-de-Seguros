@@ -42,9 +42,9 @@ with open(arquivo_sql, 'w', encoding='utf-8') as f:
             f"INSERT INTO Plano (id_seguradora, tipo_cobertura, nome_plano) VALUES ({p['id_seg']}, '{p['tipo']}', '{p['nome']}');\n")
 
     #Gerar Pessoas (1000 registros)
-    print("Gerando 1000 Pessoas...")
+    print("Gerando 100 Pessoas...")
     f.write("\n-- INSERTS DE PESSOAS\n")
-    for id_pessoa in range(1, 1001):
+    for id_pessoa in range(1, 101):
         cpf = fake.cpf().replace('.', '').replace('-', '')
         nome = fake.name().replace("'", "''")  # O replace evita erro no SQL se o nome tiver apóstrofo (ex: D'Angelo)
         email = fake.ascii_free_email()
@@ -63,14 +63,14 @@ with open(arquivo_sql, 'w', encoding='utf-8') as f:
     id_cotacao_global = 1
 
     #Para cada pessoa gerada criar os dados complementares
-    for id_pessoa in range(1, 1001):
+    for id_pessoa in range(1, 101):
 
         #Cada pessoa tem de 1 a 3 bens
         num_bens = random.randint(1, 3)
         for _ in range(num_bens):
             tipo_bem = random.choice(['Veículo', 'Imóvel', 'Eletrônico', 'Vida'])
             descricao = f"Bem protegido - {fake.word().capitalize()}"
-            valor = round(random.uniform(2000.00, 350000.00), 2)
+            valor = round(random.uniform(2000.00, 3500.00), 2)
             f.write(
                 f"INSERT INTO Bens (id_pessoa, tipo_bem, descricao_bem, valor_estimado) VALUES ({id_pessoa}, '{tipo_bem}', '{descricao}', {valor});\n")
 
