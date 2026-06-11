@@ -9,19 +9,20 @@ CREATE TABLE Pessoa (
     sexo CHAR(1) NOT NULL,
     telefone VARCHAR(11) NOT NULL,
     data_nascimento DATE NOT NULL,
-    status VARCHAR(10) NOT NULL
+    status VARCHAR(10) NOT NULL,
+    regiao VARCHAR(50) NOT NULL
 );
 
 DROP TABLE IF EXISTS Bens CASCADE;
 CREATE TABLE Bens (
     id_bem SERIAL PRIMARY KEY,
     id_pessoa INT NOT NULL,
-    tipo_bem VARCHAR(10) NOT NULL,
+    tipo_bem VARCHAR(20) NOT NULL,
     descricao_bem VARCHAR(100) NOT NULL,
     valor_estimado NUMERIC(10, 2) NOT NULL,
     FOREIGN KEY (id_pessoa) REFERENCES Pessoa(id_pessoa)
         ON DELETE CASCADE
-            ON UPDATE CASCADE
+        ON UPDATE CASCADE
 );
 
 DROP TABLE IF EXISTS Seguradora CASCADE;
@@ -29,7 +30,9 @@ CREATE TABLE Seguradora (
     id_seguradora SERIAL PRIMARY KEY,
     nome_fantasia VARCHAR(100),
     cnpj VARCHAR(14) NOT NULL,
-    telefone_suporte VARCHAR(11) NOT NULL
+    telefone_suporte VARCHAR(11) NOT NULL,
+    regiao VARCHAR(50) NOT NULL,
+    porcentagem_comissao NUMERIC(5, 2) NOT NULL
 );
 
 DROP TABLE IF EXISTS Plano CASCADE;
@@ -40,7 +43,7 @@ CREATE TABLE Plano (
     nome_plano VARCHAR(100) NOT NULL,
     FOREIGN KEY (id_seguradora) REFERENCES Seguradora(id_seguradora)
         ON DELETE CASCADE
-            ON UPDATE CASCADE
+        ON UPDATE CASCADE
 );
 
 DROP TABLE IF EXISTS Cotacoes CASCADE;
@@ -51,15 +54,16 @@ CREATE TABLE Cotacoes (
     id_plano INT,
     valor_cotacao DECIMAL(10, 2) NOT NULL,
     data_cotacao DATE NOT NULL,
+    status_cotacao VARCHAR(20) DEFAULT 'Pendente',
     FOREIGN KEY (id_pessoa) REFERENCES Pessoa(id_pessoa)
         ON DELETE CASCADE
-            ON UPDATE CASCADE,
+        ON UPDATE CASCADE,
     FOREIGN KEY (id_seguradora) REFERENCES Seguradora(id_seguradora)
         ON DELETE CASCADE
-            ON UPDATE CASCADE,
+        ON UPDATE CASCADE,
     FOREIGN KEY (id_plano) REFERENCES Plano(id_plano)
         ON DELETE CASCADE
-            ON UPDATE CASCADE
+        ON UPDATE CASCADE
 );
 
 DROP TABLE IF EXISTS Apolice CASCADE;
@@ -80,7 +84,6 @@ CREATE TABLE Usuario (
     senha VARCHAR(100) NOT NULL
 );
 
-ALTER TABLE Cotacoes ADD COLUMN status_cotacao VARCHAR(20) DEFAULT 'Pendente';
 
 -----Trigger------
 CREATE OR REPLACE FUNCTION fn_gerar_apolice_automatica()
