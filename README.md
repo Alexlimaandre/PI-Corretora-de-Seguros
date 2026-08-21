@@ -118,8 +118,8 @@ Cliente → Cotação → Aprovação → Geração Automática da Apólice
 * Alexandre Lima André
 * Cleverson Alves
 * Gabriel William
-* Jonata Augusto
-* Matheus Nascimento
+* Felipe Santos
+* Fernanda Rosa
 
 ---
 
